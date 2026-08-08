@@ -1,0 +1,1159 @@
+openapi: 3.1.0
+info:
+  title: Geevheit Intelligence 360 API
+  version: 0.1.0
+  description: API-first contract for the enterprise transportation intelligence platform.
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: API is running
+  /api/v1/login:
+    post:
+      summary: Authenticate user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authentication tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+        "401":
+          description: Invalid credentials
+  /api/v1/refresh:
+    post:
+      summary: Rotate refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: New authentication tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResult"
+  /api/v1/logout:
+    post:
+      summary: Revoke current session refresh tokens
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Logged out
+  /api/v1/me:
+    get:
+      summary: Current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /api/v1/users:
+    get:
+      summary: List users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Users
+    post:
+      summary: Create user
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: User created
+  /api/v1/users/{id}:
+    get:
+      summary: Get user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: User
+    put:
+      summary: Update user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: User updated
+    delete:
+      summary: Delete user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "204":
+          description: User deleted
+  /api/v1/roles:
+    get:
+      summary: List roles
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Roles
+    post:
+      summary: Create role
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Role created
+  /api/v1/permissions:
+    get:
+      summary: List permissions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Permissions
+    post:
+      summary: Create permission
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Permission created
+  /api/v1/tenants:
+    get:
+      summary: List tenants
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Tenants
+    post:
+      summary: Create tenant
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Tenant created
+  /api/v1/audit-logs:
+    get:
+      summary: List tenant audit logs
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Audit logs
+  /api/v1/assets:
+    get:
+      summary: Search assets
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Asset page
+    post:
+      summary: Create asset
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Asset"
+      responses:
+        "201":
+          description: Asset created
+  /api/v1/assets/{id}:
+    get:
+      summary: Get asset
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Asset
+    put:
+      summary: Update asset
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Asset updated
+    delete:
+      summary: Soft delete asset
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "204":
+          description: Asset deleted
+  /api/v1/assets/categories:
+    get:
+      summary: Search asset categories
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Category page
+    post:
+      summary: Create asset category
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Category created
+  /api/v1/assets/types:
+    get:
+      summary: Search asset types
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Type page
+    post:
+      summary: Create asset type
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Type created
+  /api/v1/assets/manufacturers:
+    get:
+      summary: Search asset manufacturers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Manufacturer page
+    post:
+      summary: Create asset manufacturer
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Manufacturer created
+  /api/v1/assets/models:
+    get:
+      summary: Search asset models
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Model page
+    post:
+      summary: Create asset model
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Model created
+  /api/v1/assets/equipment:
+    get:
+      summary: Search asset equipment
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Equipment page
+    post:
+      summary: Create asset equipment
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Equipment created
+  /api/v1/checklists:
+    get:
+      summary: Search checklists
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Checklist page
+    post:
+      summary: Create checklist
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Checklist"
+      responses:
+        "201":
+          description: Checklist created
+  /api/v1/checklists/{id}:
+    get:
+      summary: Get checklist
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist
+    put:
+      summary: Update checklist
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist updated
+    delete:
+      summary: Soft delete checklist
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "204":
+          description: Checklist deleted
+  /api/v1/checklists/{id}/start:
+    post:
+      summary: Start checklist
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist started
+  /api/v1/checklists/{id}/finish:
+    post:
+      summary: Finish checklist
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist finished
+  /api/v1/checklists/{id}/cancel:
+    post:
+      summary: Cancel checklist
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist cancelled
+  /api/v1/checklists/{id}/items:
+    get:
+      summary: List checklist items
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist items
+    post:
+      summary: Add checklist item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChecklistItem"
+      responses:
+        "201":
+          description: Checklist item created
+  /api/v1/checklists/{id}/items/{item_id}:
+    put:
+      summary: Update checklist item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/ItemID"
+      responses:
+        "200":
+          description: Checklist item updated
+    delete:
+      summary: Delete checklist item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/ItemID"
+      responses:
+        "204":
+          description: Checklist item deleted
+  /api/v1/checklists/{id}/answers:
+    get:
+      summary: List checklist answers
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist answers
+    post:
+      summary: Answer checklist item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChecklistAnswer"
+      responses:
+        "201":
+          description: Checklist answer created
+  /api/v1/fleet/vehicles:
+    get:
+      summary: Search fleet vehicles
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Vehicle page
+    post:
+      summary: Create fleet vehicle
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Vehicle"
+      responses:
+        "201":
+          description: Vehicle created
+  /api/v1/tires:
+    get:
+      summary: Search tires
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Tire page
+    post:
+      summary: Create tire
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Tire"
+      responses:
+        "201":
+          description: Tire created
+  /api/v1/tires/{id}:
+    get:
+      summary: Get tire
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire
+    put:
+      summary: Update tire
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire updated
+    delete:
+      summary: Soft delete tire
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "204":
+          description: Tire deleted
+  /api/v1/tires/{id}/inspections:
+    get:
+      summary: List tire inspections
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire inspections
+    post:
+      summary: Register tire inspection
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Tire inspection created
+  /api/v1/tires/{id}/inspections/{inspection_id}:
+    put:
+      summary: Update tire inspection
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/InspectionID"
+      responses:
+        "200":
+          description: Tire inspection updated
+    delete:
+      summary: Delete tire inspection
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/InspectionID"
+      responses:
+        "204":
+          description: Tire inspection deleted
+  /api/v1/tires/{id}/movements:
+    get:
+      summary: List tire movements
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire movements
+    post:
+      summary: Register tire movement
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Tire movement created
+  /api/v1/tires/{id}/install:
+    post:
+      summary: Install tire
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire installed
+  /api/v1/tires/{id}/remove:
+    post:
+      summary: Remove tire
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire removed
+  /api/v1/tires/{id}/rotate:
+    post:
+      summary: Rotate tire
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire rotated
+  /api/v1/tires/{id}/recap:
+    post:
+      summary: Send tire to recap
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire sent to recap
+  /api/v1/tires/{id}/return:
+    post:
+      summary: Return tire from recap
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire returned from recap
+  /api/v1/tires/{id}/dispose:
+    post:
+      summary: Dispose tire
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Tire disposed
+  /api/v1/maintenance/work-orders:
+    get:
+      summary: Search maintenance work orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Work order page
+    post:
+      summary: Create maintenance work order
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkOrder"
+      responses:
+        "201":
+          description: Work order created
+  /api/v1/maintenance/work-orders/{id}:
+    get:
+      summary: Get maintenance work order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Work order
+    put:
+      summary: Update maintenance work order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Work order updated
+    delete:
+      summary: Soft delete maintenance work order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "204":
+          description: Work order deleted
+  /api/v1/maintenance/work-orders/{id}/start:
+    post:
+      summary: Start maintenance work order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Work order started
+  /api/v1/maintenance/work-orders/{id}/complete:
+    post:
+      summary: Complete maintenance work order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Work order completed
+  /api/v1/maintenance/work-orders/{id}/cancel:
+    post:
+      summary: Cancel maintenance work order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Work order cancelled
+  /api/v1/maintenance/work-orders/{id}/labor:
+    get:
+      summary: List work order labor
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Labor entries
+    post:
+      summary: Add work order labor
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Labor entry created
+  /api/v1/maintenance/work-orders/{id}/downtime:
+    get:
+      summary: List work order downtime
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Downtime entries
+    post:
+      summary: Start work order downtime
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Downtime started
+  /api/v1/maintenance/work-orders/{id}/history:
+    get:
+      summary: List work order history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: History events
+  /api/v1/maintenance/preventive-plans:
+    get:
+      summary: Search preventive plans
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Preventive plan page
+    post:
+      summary: Create preventive plan
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Preventive plan created
+  /api/v1/maintenance/service-types:
+    get:
+      summary: Search maintenance service types
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Service type page
+    post:
+      summary: Create maintenance service type
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Service type created
+  /api/v1/fleet/vehicles/{id}:
+    get:
+      summary: Get fleet vehicle
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Vehicle
+    put:
+      summary: Update fleet vehicle
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Vehicle updated
+    delete:
+      summary: Soft delete fleet vehicle
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "204":
+          description: Vehicle deleted
+  /api/v1/fleet/brands:
+    get:
+      summary: Search vehicle brands
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Brand page
+    post:
+      summary: Create vehicle brand
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Brand created
+  /api/v1/fleet/models:
+    get:
+      summary: Search vehicle models
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Model page
+    post:
+      summary: Create vehicle model
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Model created
+  /api/v1/fleet/categories:
+    get:
+      summary: Search vehicle categories
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Category page
+    post:
+      summary: Create vehicle category
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Category created
+  /api/v1/fleet/types:
+    get:
+      summary: Search vehicle types
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Type page
+    post:
+      summary: Create vehicle type
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Type created
+  /api/v1/fleet/assets:
+    get:
+      summary: Search fleet assets
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Asset page
+    post:
+      summary: Create fleet asset
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Asset created
+  /api/v1/mission-control/summary:
+    get:
+      summary: Current operational intelligence summary
+      responses:
+        "200":
+          description: Mission Control summary
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    ItemID:
+      name: item_id
+      in: path
+      required: true
+      schema:
+        type: string
+    InspectionID:
+      name: inspection_id
+      in: path
+      required: true
+      schema:
+        type: string
+    Search:
+      name: search
+      in: query
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+    PageSize:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        default: 20
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        tenant_id:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+    AuthResult:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+        user:
+          $ref: "#/components/schemas/User"
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+    Asset:
+      type: object
+      required: [internal_code, asset_tag, name]
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        internal_code:
+          type: string
+        serial_number:
+          type: string
+        asset_tag:
+          type: string
+        name:
+          type: string
+        category_id:
+          type: string
+        type_id:
+          type: string
+        status:
+          type: string
+        ownership:
+          type: string
+    Vehicle:
+      type: object
+      required: [license_plate, renavam, chassis]
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        category_id:
+          type: string
+        type_id:
+          type: string
+        brand_id:
+          type: string
+        model_id:
+          type: string
+        asset_id:
+          type: string
+        license_plate:
+          type: string
+        renavam:
+          type: string
+        chassis:
+          type: string
+        ownership_type:
+          type: string
+        status:
+          type: string
+    Checklist:
+      type: object
+      required: [vehicle_id, title]
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        vehicle_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+    ChecklistItem:
+      type: object
+      required: [title]
+      properties:
+        id:
+          type: string
+        checklist_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        required:
+          type: boolean
+        order_index:
+          type: integer
+        answer_type:
+          type: string
+        expected_value:
+          type: string
+    ChecklistAnswer:
+      type: object
+      required: [checklist_item_id]
+      properties:
+        id:
+          type: string
+        checklist_item_id:
+          type: string
+        answer:
+          type: string
+        notes:
+          type: string
+        photo_url:
+          type: string
+    Tire:
+      type: object
+      required: [serial_number, fire_number, dot]
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        serial_number:
+          type: string
+        fire_number:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        size:
+          type: string
+        dot:
+          type: string
+        current_tread_mm:
+          type: number
+        original_tread_mm:
+          type: number
+        minimum_tread_mm:
+          type: number
+        status:
+          type: string
+        vehicle_id:
+          type: string
+        position:
+          type: string
+    WorkOrder:
+      type: object
+      required: [title]
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        asset_id:
+          type: string
+        vehicle_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        kind:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        service_type_id:
+          type: string
