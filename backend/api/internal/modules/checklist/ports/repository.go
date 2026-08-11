@@ -44,3 +44,68 @@ type ChecklistAnswerRepository interface {
 	Create(ctx context.Context, answer domain.ChecklistAnswer) (domain.ChecklistAnswer, error)
 	List(ctx context.Context, tenantID string, checklistID string, query Query) (Page[domain.ChecklistAnswer], error)
 }
+
+type ChecklistTemplateRepository interface {
+	Create(context.Context, domain.ChecklistTemplate) (domain.ChecklistTemplate, error)
+	FindByID(context.Context, string, string) (domain.ChecklistTemplate, error)
+	Search(context.Context, string, Query) (Page[domain.ChecklistTemplate], error)
+	Update(context.Context, domain.ChecklistTemplate) (domain.ChecklistTemplate, error)
+	Delete(context.Context, string, string) error
+}
+
+type ChecklistTemplateVersionRepository interface {
+	Create(context.Context, domain.ChecklistTemplateVersion) (domain.ChecklistTemplateVersion, error)
+	FindByID(context.Context, string, string) (domain.ChecklistTemplateVersion, error)
+	ListByTemplate(context.Context, string, string, Query) (Page[domain.ChecklistTemplateVersion], error)
+	Update(context.Context, domain.ChecklistTemplateVersion) (domain.ChecklistTemplateVersion, error)
+}
+
+type ChecklistTypeRepository interface {
+	Create(context.Context, domain.ChecklistType) (domain.ChecklistType, error)
+	Search(context.Context, string, Query) (Page[domain.ChecklistType], error)
+}
+
+type ChecklistSectionRepository interface {
+	Create(context.Context, domain.ChecklistSection) (domain.ChecklistSection, error)
+	Search(context.Context, string, Query) (Page[domain.ChecklistSection], error)
+}
+
+type ChecklistEngineItemRepository interface {
+	Create(context.Context, domain.ChecklistEngineItem) (domain.ChecklistEngineItem, error)
+	FindByID(context.Context, string, string) (domain.ChecklistEngineItem, error)
+	ListByVersion(context.Context, string, string, Query) (Page[domain.ChecklistEngineItem], error)
+}
+
+type ChecklistExecutionRepository interface {
+	Create(context.Context, domain.ChecklistExecution) (domain.ChecklistExecution, error)
+	FindByID(context.Context, string, string) (domain.ChecklistExecution, error)
+	Search(context.Context, string, Query) (Page[domain.ChecklistExecution], error)
+	Update(context.Context, domain.ChecklistExecution) (domain.ChecklistExecution, error)
+}
+
+type ChecklistResponseRepository interface {
+	Create(context.Context, domain.ChecklistResponse) (domain.ChecklistResponse, error)
+	ListByExecution(context.Context, string, string, Query) (Page[domain.ChecklistResponse], error)
+	ExistsForItem(context.Context, string, string, string) (bool, error)
+}
+
+type ChecklistEvidenceRepository interface {
+	Create(context.Context, domain.ChecklistEvidence) (domain.ChecklistEvidence, error)
+	ListByExecution(context.Context, string, string, Query) (Page[domain.ChecklistEvidence], error)
+	ExistsForResponse(context.Context, string, string, string) (bool, error)
+}
+
+type ChecklistNonConformityRepository interface {
+	Create(context.Context, domain.ChecklistNonConformity) (domain.ChecklistNonConformity, error)
+	ListByExecution(context.Context, string, string, Query) (Page[domain.ChecklistNonConformity], error)
+}
+
+type ChecklistSignatureRepository interface {
+	Create(context.Context, domain.ChecklistSignature) (domain.ChecklistSignature, error)
+	ExistsForExecution(context.Context, string, string) (bool, error)
+}
+
+type ChecklistHistoryRepository interface {
+	Create(context.Context, domain.ChecklistHistory) (domain.ChecklistHistory, error)
+	ListByExecution(context.Context, string, string, Query) (Page[domain.ChecklistHistory], error)
+}

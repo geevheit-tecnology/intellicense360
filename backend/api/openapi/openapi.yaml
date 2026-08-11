@@ -79,6 +79,191 @@ paths:
       responses:
         "201":
           description: User created
+  /api/v1/ciot:
+    get:
+      summary: List CIOT records
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: CIOT page
+    post:
+      summary: Create CIOT draft
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: CIOT created
+  /api/v1/ciot/{id}:
+    get:
+      summary: Get CIOT
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT
+    patch:
+      summary: Update editable CIOT data
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT updated
+    delete:
+      summary: Soft delete non-finalized CIOT
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "204":
+          description: CIOT deleted
+  /api/v1/ciot/{id}/history:
+    get:
+      summary: List append-only CIOT lifecycle history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT history
+  /api/v1/ciot/{id}/activate:
+    post:
+      summary: Activate generated CIOT
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT activated
+  /api/v1/ciot/{id}/suspend:
+    post:
+      summary: Suspend active CIOT
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT suspended
+  /api/v1/ciot/{id}/reactivate:
+    post:
+      summary: Reactivate suspended CIOT
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT reactivated
+  /api/v1/ciot/{id}/close:
+    post:
+      summary: Close active CIOT
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT closed
+  /api/v1/ciot/{id}/cancel:
+    post:
+      summary: Cancel pending, generated, or active CIOT
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT canceled
+  /api/v1/ciot/{id}/payments:
+    get:
+      summary: List CIOT payments
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT payments
+    post:
+      summary: Record CIOT payment reference
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "201":
+          description: CIOT payment recorded
+  /api/v1/ciot/{id}/provider-attempts:
+    get:
+      summary: List provider-agnostic CIOT attempts
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT provider attempts
+    post:
+      summary: Record provider-agnostic CIOT attempt
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "201":
+          description: CIOT provider attempt recorded
+  /api/v1/ciot/{id}/external-reference:
+    get:
+      summary: Get CIOT external reference
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT external reference
+    post:
+      summary: Upsert CIOT external reference
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PathID"
+      responses:
+        "200":
+          description: CIOT external reference saved
+  /api/v1/ciot/types:
+    get:
+      summary: List supported CIOT types
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: CIOT types
   /api/v1/users/{id}:
     get:
       summary: Get user
@@ -1472,6 +1657,601 @@ paths:
       responses:
         "200":
           description: Mission Control summary
+  /api/v1/fuel/transactions:
+    get:
+      summary: Search fuel transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Fuel transaction page
+    post:
+      summary: Create fuel transaction
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel transaction created
+  /api/v1/fuel/transactions/{id}:
+    get:
+      summary: Get fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Fuel transaction
+    put:
+      summary: Update draft fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Fuel transaction updated
+    delete:
+      summary: Soft delete draft fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "204":
+          description: Fuel transaction deleted
+  /api/v1/fuel/transactions/{id}/complete:
+    post:
+      summary: Complete fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Fuel transaction completed
+  /api/v1/fuel/transactions/{id}/cancel:
+    post:
+      summary: Cancel fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Fuel transaction canceled
+  /api/v1/fuel/transactions/{id}/adjust:
+    post:
+      summary: Adjust completed fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Fuel adjustment created
+  /api/v1/fuel/types:
+    get:
+      summary: Search fuel types
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel type page
+    post:
+      summary: Create fuel type
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel type created
+  /api/v1/fuel/stations:
+    get:
+      summary: Search fuel stations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel station page
+    post:
+      summary: Create fuel station
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel station created
+  /api/v1/fuel/tanks:
+    get:
+      summary: Search fuel tanks
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel tank page
+    post:
+      summary: Create fuel tank
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel tank created
+  /api/v1/fuel/nozzles:
+    get:
+      summary: Search fuel nozzles
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel nozzle page
+    post:
+      summary: Create fuel nozzle
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel nozzle created
+  /api/v1/fuel/readings:
+    get:
+      summary: Search fuel readings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel reading page
+    post:
+      summary: Record fuel reading
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel reading recorded
+  /api/v1/fuel/prices:
+    get:
+      summary: Search fuel prices
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel price page
+    post:
+      summary: Record fuel price
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel price recorded
+  /api/v1/fuel/receipts:
+    get:
+      summary: Search fuel receipts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel receipt page
+    post:
+      summary: Create fuel receipt
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel receipt created
+  /api/v1/fuel/adjustments:
+    get:
+      summary: Search fuel adjustments
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel adjustment page
+    post:
+      summary: Adjust completed fuel transaction
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel adjustment created
+  /api/v1/checklists/templates:
+    get:
+      summary: Search checklist templates
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Checklist template page
+    post:
+      summary: Create checklist template
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Checklist template created
+  /api/v1/checklists/templates/{id}/versions:
+    get:
+      summary: List checklist template versions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Template version page
+    post:
+      summary: Create checklist template version
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Template version created
+  /api/v1/checklists/templates/versions/{id}/publish:
+    post:
+      summary: Publish checklist template version
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Template version published
+  /api/v1/checklists/types:
+    get:
+      summary: Search checklist types
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Checklist type page
+    post:
+      summary: Create checklist type
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Checklist type created
+  /api/v1/checklists/sections:
+    get:
+      summary: Search checklist sections
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Checklist section page
+    post:
+      summary: Create checklist section
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Checklist section created
+  /api/v1/checklists/items:
+    get:
+      summary: Search checklist engine items
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Checklist engine item page
+    post:
+      summary: Create checklist engine item
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Checklist engine item created
+  /api/v1/checklists/executions:
+    get:
+      summary: Search checklist executions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Checklist execution page
+    post:
+      summary: Start checklist execution
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Checklist execution started
+  /api/v1/checklists/executions/{id}/responses:
+    get:
+      summary: List checklist execution responses
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist response page
+    post:
+      summary: Record checklist response
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Checklist response recorded
+  /api/v1/checklists/executions/{id}/evidence:
+    get:
+      summary: List checklist execution evidence
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist evidence page
+    post:
+      summary: Add checklist evidence
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Checklist evidence added
+  /api/v1/checklists/executions/{id}/non-conformities:
+    get:
+      summary: List checklist non-conformities
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist non-conformity page
+    post:
+      summary: Create checklist non-conformity
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Checklist non-conformity created
+  /api/v1/checklists/executions/{id}/history:
+    get:
+      summary: List checklist execution history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Checklist history page
+  /api/v1/financial/transactions:
+    get:
+      summary: Search financial transactions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Financial transaction page
+  /api/v1/financial/transactions/{id}:
+    get:
+      summary: Get financial transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Financial transaction
+    put:
+      summary: Update draft financial transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Financial transaction updated
+  /api/v1/financial/transactions/{id}/approve:
+    post:
+      summary: Approve financial transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Financial transaction approved
+  /api/v1/financial/transactions/{id}/pay:
+    post:
+      summary: Pay expense transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Expense paid
+  /api/v1/financial/transactions/{id}/receive:
+    post:
+      summary: Receive revenue transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Revenue received
+  /api/v1/financial/transactions/{id}/adjust:
+    post:
+      summary: Adjust finalized financial transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Financial adjustment created
+  /api/v1/financial/expenses:
+    get:
+      summary: Search expenses
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Expense page
+    post:
+      summary: Create expense
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Expense created
+  /api/v1/financial/revenues:
+    get:
+      summary: Search revenues
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Revenue page
+    post:
+      summary: Create revenue
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Revenue created
+  /api/v1/financial/categories:
+    get:
+      summary: Search cost categories
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Category page
+    post:
+      summary: Create cost category
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Category created
+  /api/v1/financial/types:
+    get:
+      summary: Search cost types
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cost type page
+    post:
+      summary: Create cost type
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Cost type created
+  /api/v1/financial/cost-centers:
+    get:
+      summary: Search cost centers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cost center page
+    post:
+      summary: Create cost center
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Cost center created
+  /api/v1/financial/accounts:
+    get:
+      summary: Search financial accounts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Account page
+    post:
+      summary: Create financial account
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Account created
+  /api/v1/financial/payment-methods:
+    get:
+      summary: Search payment methods
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Payment method page
+    post:
+      summary: Create payment method
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Payment method created
+  /api/v1/financial/periods:
+    get:
+      summary: Search financial periods
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Financial period page
+    post:
+      summary: Create financial period
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Financial period created
+  /api/v1/financial/periods/{id}/close:
+    post:
+      summary: Close financial period
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Financial period closed
+  /api/v1/financial/budgets:
+    get:
+      summary: Search budgets
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Budget page
+    post:
+      summary: Create budget
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Budget created
+  /api/v1/financial/adjustments:
+    get:
+      summary: Search financial adjustments
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Financial adjustment page
+    post:
+      summary: Adjust finalized financial transaction
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Financial adjustment created
 components:
   securitySchemes:
     bearerAuth:

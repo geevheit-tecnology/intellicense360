@@ -10,9 +10,18 @@ import (
 	checklistapp "github.com/geevheit/intelligence360/backend/api/internal/modules/checklist/application"
 	checklistinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/checklist/infrastructure"
 	checklisthttp "github.com/geevheit/intelligence360/backend/api/internal/modules/checklist/transport/http"
+	ciotapp "github.com/geevheit/intelligence360/backend/api/internal/modules/ciot/application"
+	ciotinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/ciot/infrastructure"
+	ciothttp "github.com/geevheit/intelligence360/backend/api/internal/modules/ciot/transport/http"
+	financialapp "github.com/geevheit/intelligence360/backend/api/internal/modules/financial/application"
+	financialinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/financial/infrastructure"
+	financialhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/financial/transport/http"
 	fleetapp "github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/application"
 	fleetinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/infrastructure"
 	fleethttp "github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/transport/http"
+	fuelapp "github.com/geevheit/intelligence360/backend/api/internal/modules/fuel/application"
+	fuelinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/fuel/infrastructure"
+	fuelhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/fuel/transport/http"
 	identityapp "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/application"
 	identityinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/infrastructure"
 	identityhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/transport/http"
@@ -71,6 +80,16 @@ func (c *Container) HTTPRouter() *gin.Engine {
 		checklistapp.NewChecklistService(checklistStore.Checklists()),
 		checklistapp.NewChecklistItemService(checklistStore.Checklists(), checklistStore.Items()),
 		checklistapp.NewChecklistAnswerService(checklistStore.Items(), checklistStore.Answers()),
+		checklistapp.NewChecklistTemplateService(checklistStore.Templates()),
+		checklistapp.NewChecklistTemplateVersionService(checklistStore.Templates(), checklistStore.Versions()),
+		checklistapp.NewChecklistTypeService(checklistStore.Types()),
+		checklistapp.NewChecklistSectionService(checklistStore.Sections()),
+		checklistapp.NewChecklistEngineItemService(checklistStore.Versions(), checklistStore.EngineItems()),
+		checklistapp.NewChecklistExecutionService(checklistStore.Versions(), checklistStore.EngineItems(), checklistStore.Executions(), checklistStore.Responses(), checklistStore.Evidence(), checklistStore.Signatures(), checklistStore.History()),
+		checklistapp.NewChecklistEngineResponseService(checklistStore.Executions(), checklistStore.EngineItems(), checklistStore.Responses(), checklistStore.History()),
+		checklistapp.NewChecklistEvidenceService(checklistStore.Evidence(), checklistStore.History()),
+		checklistapp.NewChecklistNonConformityService(checklistStore.NonConformities(), checklistStore.History()),
+		checklistapp.NewChecklistHistoryService(checklistStore.History()),
 	)
 
 	fleetStore := fleetinfra.NewMemoryStore()
@@ -81,6 +100,50 @@ func (c *Container) HTTPRouter() *gin.Engine {
 		fleetapp.NewVehicleCategoryService(fleetStore.Categories()),
 		fleetapp.NewVehicleTypeService(fleetStore.Types()),
 		fleetapp.NewAssetService(fleetStore.Assets()),
+	)
+
+	fuelStore := fuelinfra.NewMemoryStore()
+	fuelHandler := fuelhttp.NewHandler(
+		fuelapp.NewFuelTransactionService(fuelStore.Transactions(), fuelStore.Adjustments()),
+		fuelapp.NewFuelTypeService(fuelStore.Types()),
+		fuelapp.NewFuelStationService(fuelStore.Stations()),
+		fuelapp.NewFuelTankService(fuelStore.Tanks()),
+		fuelapp.NewFuelNozzleService(fuelStore.Nozzles()),
+		fuelapp.NewFuelReadingService(fuelStore.Readings()),
+		fuelapp.NewFuelPriceService(fuelStore.Prices()),
+		fuelapp.NewFuelReceiptService(fuelStore.Receipts()),
+		fuelapp.NewFuelAdjustmentService(fuelStore.Adjustments()),
+	)
+
+	financialStore := financialinfra.NewMemoryStore()
+	financialHandler := financialhttp.NewHandler(
+		financialapp.NewTransactionService(financialStore.Transactions(), financialStore.Periods(), financialStore.Adjustments()),
+		financialapp.NewCatalogService(financialStore.Categories(), financialapp.InitCategory),
+		financialapp.NewCatalogService(financialStore.Types(), financialapp.InitType),
+		financialapp.NewCatalogService(financialStore.Centers(), financialapp.InitCenter),
+		financialapp.NewCatalogService(financialStore.Accounts(), financialapp.InitAccount),
+		financialapp.NewCatalogService(financialStore.Methods(), financialapp.InitPaymentMethod),
+		financialapp.NewPeriodService(financialStore.Periods()),
+		financialapp.NewBudgetService(financialStore.Budgets()),
+		financialapp.NewAdjustmentService(financialStore.Adjustments()),
+	)
+
+	ciotStore := ciotinfra.NewMemoryStore()
+	ciotHandler := ciothttp.NewHandler(
+		ciotapp.NewCIOTService(ciotStore.CIOTs(), ciotStore.History(), ciotStore.Errors()),
+		ciotapp.NewCatalogService(ciotStore.Contracts(), ciotapp.InitContract),
+		ciotapp.NewCatalogService(ciotStore.Carriers(), ciotapp.InitCarrier),
+		ciotapp.NewCatalogService(ciotStore.Transporters(), ciotapp.InitTransporter),
+		ciotapp.NewCatalogService(ciotStore.Operations(), ciotapp.InitOperation),
+		ciotapp.NewCatalogService(ciotStore.Vehicles(), ciotapp.InitVehicleReference),
+		ciotapp.NewCatalogService(ciotStore.Drivers(), ciotapp.InitDriverReference),
+		ciotapp.NewCatalogService(ciotStore.Amounts(), ciotapp.InitAmount),
+		ciotapp.NewStatusHistoryService(ciotStore.History()),
+		ciotapp.NewPaymentService(ciotStore.Payments(), ciotStore.History()),
+		ciotapp.NewProviderAttemptService(ciotStore.Attempts(), ciotStore.History()),
+		ciotapp.NewExternalReferenceService(ciotStore.ExternalReferences()),
+		ciotapp.NewDocumentService(ciotStore.Documents()),
+		ciotapp.NewErrorService(ciotStore.Errors()),
 	)
 
 	maintenanceStore := maintenanceinfra.NewMemoryStore()
@@ -139,6 +202,9 @@ func (c *Container) HTTPRouter() *gin.Engine {
 		AuthService:         authService,
 		ChecklistHandler:    checklistHandler,
 		FleetHandler:        fleetHandler,
+		FuelHandler:         fuelHandler,
+		FinancialHandler:    financialHandler,
+		CIOTHandler:         ciotHandler,
 		InventoryHandler:    inventoryHandler,
 		MaintenanceHandler:  maintenanceHandler,
 		SuppliersHandler:    suppliersHandler,
