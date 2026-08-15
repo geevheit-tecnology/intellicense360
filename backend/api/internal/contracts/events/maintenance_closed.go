@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const MaintenanceClosedEventName = "maintenance.closed"
+const MaintenanceClosedEventName = "maintenance.order.completed.v1"
 
 type MaintenanceClosed struct {
 	EventMetadata

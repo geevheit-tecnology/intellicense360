@@ -2,7 +2,7 @@ package events
 
 import "github.com/google/uuid"
 
-const FuelTransactionCreatedEventName = "fuel.transaction.created"
+const FuelTransactionCreatedEventName = "fuel.transaction.created.v1"
 
 type FuelTransactionCreated struct {
 	EventMetadata

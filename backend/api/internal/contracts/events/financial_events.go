@@ -1,15 +1,15 @@
 package events
 
 const (
-	FinancialTransactionCreatedEventName = "financial.transaction.created"
-	ExpenseCreatedEventName              = "financial.expense.created"
-	ExpenseApprovedEventName             = "financial.expense.approved"
-	ExpensePaidEventName                 = "financial.expense.paid"
-	RevenueCreatedEventName              = "financial.revenue.created"
-	RevenueReceivedEventName             = "financial.revenue.received"
-	FinancialAdjustmentCreatedEventName  = "financial.adjustment.created"
-	FinancialPeriodClosedEventName       = "financial.period.closed"
-	BudgetCreatedEventName               = "financial.budget.created"
+	FinancialTransactionCreatedEventName = "financial.transaction.created.v1"
+	ExpenseCreatedEventName              = "financial.expense.created.v1"
+	ExpenseApprovedEventName             = "financial.expense.approved.v1"
+	ExpensePaidEventName                 = "financial.expense.paid.v1"
+	RevenueCreatedEventName              = "financial.revenue.created.v1"
+	RevenueReceivedEventName             = "financial.revenue.received.v1"
+	FinancialAdjustmentCreatedEventName  = "financial.adjustment.created.v1"
+	FinancialPeriodClosedEventName       = "financial.period.closed.v1"
+	BudgetCreatedEventName               = "financial.budget.created.v1"
 )
 
 type FinancialTransactionCreated struct {

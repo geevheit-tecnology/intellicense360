@@ -2,7 +2,7 @@ package events
 
 import "github.com/google/uuid"
 
-const VehicleUpdatedEventName = "vehicle.updated"
+const VehicleUpdatedEventName = "vehicle.updated.v1"
 
 type VehicleUpdated struct {
 	EventMetadata

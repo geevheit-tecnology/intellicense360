@@ -2,6 +2,17 @@ package events
 
 import "time"
 
+const (
+	CIOTCreatedEventName     = "ciot.created.v1"
+	CIOTSubmittedEventName   = "ciot.submitted.v1"
+	CIOTGeneratedEventName   = "ciot.generated.v1"
+	CIOTActivatedEventName   = "ciot.activated.v1"
+	CIOTSuspendedEventName   = "ciot.suspended.v1"
+	CIOTReactivatedEventName = "ciot.reactivated.v1"
+	CIOTClosedEventName      = "ciot.closed.v1"
+	CIOTCanceledEventName    = "ciot.canceled.v1"
+)
+
 type CIOTCreated struct {
 	EventID    string    `json:"event_id"`
 	TenantID   string    `json:"tenant_id"`
@@ -34,6 +45,13 @@ type CIOTActivated struct {
 }
 
 type CIOTSuspended struct {
+	EventID    string    `json:"event_id"`
+	TenantID   string    `json:"tenant_id"`
+	CIOTID     string    `json:"ciot_id"`
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+type CIOTReactivated struct {
 	EventID    string    `json:"event_id"`
 	TenantID   string    `json:"tenant_id"`
 	CIOTID     string    `json:"ciot_id"`

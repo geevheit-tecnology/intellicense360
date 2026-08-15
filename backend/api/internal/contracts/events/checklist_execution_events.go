@@ -1,13 +1,13 @@
 package events
 
 const (
-	ChecklistExecutionStartedEventName     = "checklist.execution.started"
-	ChecklistResponseRecordedEventName     = "checklist.response.recorded"
-	ChecklistEvidenceAddedEventName        = "checklist.evidence.added"
-	ChecklistNonConformityCreatedEventName = "checklist.non_conformity.created"
-	ChecklistExecutionCompletedEventName   = "checklist.execution.completed"
-	ChecklistExecutionCanceledEventName    = "checklist.execution.canceled"
-	ChecklistExecutionInvalidatedEventName = "checklist.execution.invalidated"
+	ChecklistExecutionStartedEventName     = "checklist.execution.started.v1"
+	ChecklistResponseRecordedEventName     = "checklist.response.recorded.v1"
+	ChecklistEvidenceAddedEventName        = "checklist.evidence.added.v1"
+	ChecklistNonConformityCreatedEventName = "checklist.non_conformity.created.v1"
+	ChecklistExecutionCompletedEventName   = "checklist.execution.completed.v1"
+	ChecklistExecutionCanceledEventName    = "checklist.execution.canceled.v1"
+	ChecklistExecutionInvalidatedEventName = "checklist.execution.invalidated.v1"
 )
 
 type ChecklistExecutionStarted struct {

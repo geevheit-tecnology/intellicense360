@@ -2,7 +2,7 @@ package events
 
 import "github.com/google/uuid"
 
-const MaintenanceCreatedEventName = "maintenance.created"
+const MaintenanceCreatedEventName = "maintenance.order.created.v1"
 
 type MaintenanceCreated struct {
 	EventMetadata

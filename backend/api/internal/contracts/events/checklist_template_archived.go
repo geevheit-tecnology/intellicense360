@@ -1,6 +1,6 @@
 package events
 
-const ChecklistTemplateArchivedEventName = "checklist.template.archived"
+const ChecklistTemplateArchivedEventName = "checklist.template.archived.v1"
 
 type ChecklistTemplateArchived struct {
 	EventMetadata

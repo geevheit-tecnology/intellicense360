@@ -1,6 +1,6 @@
 package events
 
-const ChecklistTemplatePublishedEventName = "checklist.template.published"
+const ChecklistTemplatePublishedEventName = "checklist.template.published.v1"
 
 type ChecklistTemplatePublished struct {
 	EventMetadata

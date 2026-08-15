@@ -2,7 +2,7 @@ package events
 
 import "github.com/google/uuid"
 
-const AssetCreatedEventName = "asset.created"
+const AssetCreatedEventName = "asset.created.v1"
 
 type AssetCreated struct {
 	EventMetadata

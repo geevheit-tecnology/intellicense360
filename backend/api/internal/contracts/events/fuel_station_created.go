@@ -1,6 +1,6 @@
 package events
 
-const FuelStationCreatedEventName = "fuel.station.created"
+const FuelStationCreatedEventName = "fuel.station.created.v1"
 
 type FuelStationCreated struct {
 	EventMetadata

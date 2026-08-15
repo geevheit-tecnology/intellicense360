@@ -1,6 +1,6 @@
 package events
 
-const FuelTransactionCompletedEventName = "fuel.transaction.completed"
+const FuelTransactionCompletedEventName = "fuel.transaction.completed.v1"
 
 type FuelTransactionCompleted struct {
 	EventMetadata

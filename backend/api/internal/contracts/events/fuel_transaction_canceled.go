@@ -1,6 +1,6 @@
 package events
 
-const FuelTransactionCanceledEventName = "fuel.transaction.canceled"
+const FuelTransactionCanceledEventName = "fuel.transaction.canceled.v1"
 
 type FuelTransactionCanceled struct {
 	EventMetadata

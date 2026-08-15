@@ -2,7 +2,7 @@ package events
 
 import "github.com/google/uuid"
 
-const PartCreatedEventName = "part.created"
+const PartCreatedEventName = "inventory.part.created.v1"
 
 type PartCreated struct {
 	EventMetadata

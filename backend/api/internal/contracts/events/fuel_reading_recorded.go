@@ -1,6 +1,6 @@
 package events
 
-const FuelReadingRecordedEventName = "fuel.reading.recorded"
+const FuelReadingRecordedEventName = "fuel.reading.recorded.v1"
 
 type FuelReadingRecorded struct {
 	EventMetadata

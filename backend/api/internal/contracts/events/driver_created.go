@@ -1,6 +1,6 @@
 package events
 
-const DriverCreatedEventName = "driver.created"
+const DriverCreatedEventName = "driver.created.v1"
 
 type DriverCreated struct {
 	EventMetadata
