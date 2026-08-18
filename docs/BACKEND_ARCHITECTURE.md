@@ -152,7 +152,7 @@ GET /health
 GET /api/v1/mission-control/summary
 ```
 
-`/api/v1/mission-control/summary` is routed through the Intelligence module handler.
+`/api/v1/mission-control/summary` is routed through the Mission Control module handler.
 
 ## Business Rules
 

@@ -1653,10 +1653,330 @@ paths:
           description: Asset created
   /api/v1/mission-control/summary:
     get:
-      summary: Current operational intelligence summary
+      summary: Mission Control operational summary
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: Mission Control summary
+  /api/v1/mission-control/items:
+    get:
+      summary: List Mission Control command items
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: severity
+          schema:
+            type: string
+        - in: query
+          name: priority
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: source_type
+          schema:
+            type: string
+        - in: query
+          name: assigned_to
+          schema:
+            type: string
+        - in: query
+          name: sla_status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Command item page
+    post:
+      summary: Create Mission Control command item
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Command item created
+        "409":
+          description: Duplicate active command item
+  /api/v1/mission-control/items/{id}:
+    get:
+      summary: Get Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item
+    patch:
+      summary: Update Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item updated
+  /api/v1/mission-control/items/{id}/acknowledge:
+    post:
+      summary: Acknowledge Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item acknowledged
+  /api/v1/mission-control/items/{id}/start:
+    post:
+      summary: Start Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item started
+  /api/v1/mission-control/items/{id}/resolve:
+    post:
+      summary: Resolve Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item resolved
+  /api/v1/mission-control/items/{id}/dismiss:
+    post:
+      summary: Dismiss Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item dismissed
+  /api/v1/mission-control/items/{id}/actions:
+    get:
+      summary: List Mission Control command actions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command action page
+    post:
+      summary: Create Mission Control command action
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Command action created
+  /api/v1/mission-control/items/{id}/history:
+    get:
+      summary: List Mission Control append-only history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command event page
+  /api/v1/mission-control/snapshot:
+    get:
+      summary: Get latest Mission Control snapshot
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Operational snapshot
+  /api/v1/mission-control/snapshot/rebuild:
+    post:
+      summary: Rebuild Mission Control snapshot
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Operational snapshot rebuilt
+  /api/v1/mission-control/recommendations:
+    get:
+      summary: List Mission Control recommendation items
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Recommendation command item page
+  /api/v1/mission-control/recommendations/evaluate:
+    post:
+      summary: Evaluate deterministic Mission Control recommendations
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Recommendation actions created
+  /api/v1/intelligence/health:
+    get:
+      summary: Intelligence engine health
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Deterministic intelligence engine status
+  /api/v1/intelligence/metrics:
+    get:
+      summary: Search intelligence metrics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Metric page
+    post:
+      summary: Create intelligence metric
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Metric created
+  /api/v1/intelligence/metrics/{id}:
+    get:
+      summary: Get intelligence metric
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Metric
+  /api/v1/intelligence/anomalies:
+    get:
+      summary: Search intelligence anomalies
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Anomaly page
+    post:
+      summary: Create intelligence anomaly
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Anomaly created
+  /api/v1/intelligence/risks:
+    get:
+      summary: Search intelligence risks
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Risk page
+    post:
+      summary: Create intelligence risk
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Risk created
+  /api/v1/intelligence/opportunities:
+    get:
+      summary: Search intelligence opportunities
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Opportunity page
+    post:
+      summary: Create intelligence opportunity
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Opportunity created
+  /api/v1/intelligence/recommendations:
+    get:
+      summary: Search intelligence recommendations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Recommendation page
+    post:
+      summary: Create intelligence recommendation
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Recommendation created
+  /api/v1/intelligence/insights:
+    get:
+      summary: Search intelligence insights
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Insight page
+    post:
+      summary: Create intelligence insight
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Insight created
+  /api/v1/intelligence/insights/{id}:
+    get:
+      summary: Get intelligence insight
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Insight
+  /api/v1/intelligence/insights/{id}/acknowledge:
+    post:
+      summary: Acknowledge intelligence insight
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Insight acknowledged
+  /api/v1/intelligence/insights/{id}/resolve:
+    post:
+      summary: Resolve intelligence insight
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Insight resolved
+  /api/v1/intelligence/insights/{id}/dismiss:
+    post:
+      summary: Dismiss intelligence insight
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Insight dismissed
   /api/v1/fuel/transactions:
     get:
       summary: Search fuel transactions

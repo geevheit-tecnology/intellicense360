@@ -18,27 +18,29 @@ import (
 	intelligencehttp "github.com/geevheit/intelligence360/backend/api/internal/modules/intelligence/transport/http"
 	inventoryhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/inventory/transport/http"
 	maintenancehttp "github.com/geevheit/intelligence360/backend/api/internal/modules/maintenance/transport/http"
+	missionhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/missioncontrol/transport/http"
 	suppliershttp "github.com/geevheit/intelligence360/backend/api/internal/modules/suppliers/transport/http"
 	tireshttp "github.com/geevheit/intelligence360/backend/api/internal/modules/tires/transport/http"
 	"github.com/gin-gonic/gin"
 )
 
 type RouterDependencies struct {
-	Config              config.Config
-	Logger              logger.Logger
-	AssetsHandler       assetshttp.Handler
-	IdentityHandler     identityhttp.Handler
-	AuthService         identityports.AuthenticationService
-	ChecklistHandler    checklisthttp.Handler
-	FleetHandler        fleethttp.Handler
-	FuelHandler         fuelhttp.Handler
-	FinancialHandler    financialhttp.Handler
-	CIOTHandler         ciothttp.Handler
-	InventoryHandler    inventoryhttp.Handler
-	MaintenanceHandler  maintenancehttp.Handler
-	SuppliersHandler    suppliershttp.Handler
-	TiresHandler        tireshttp.Handler
-	IntelligenceHandler intelligencehttp.Handler
+	Config                config.Config
+	Logger                logger.Logger
+	AssetsHandler         assetshttp.Handler
+	IdentityHandler       identityhttp.Handler
+	AuthService           identityports.AuthenticationService
+	ChecklistHandler      checklisthttp.Handler
+	FleetHandler          fleethttp.Handler
+	FuelHandler           fuelhttp.Handler
+	FinancialHandler      financialhttp.Handler
+	CIOTHandler           ciothttp.Handler
+	InventoryHandler      inventoryhttp.Handler
+	MaintenanceHandler    maintenancehttp.Handler
+	SuppliersHandler      suppliershttp.Handler
+	TiresHandler          tireshttp.Handler
+	IntelligenceHandler   intelligencehttp.Handler
+	MissionControlHandler missionhttp.Handler
 }
 
 func NewRouter(deps RouterDependencies) *gin.Engine {
@@ -81,6 +83,7 @@ func NewRouter(deps RouterDependencies) *gin.Engine {
 		deps.MaintenanceHandler.RegisterRoutes(protected)
 		deps.SuppliersHandler.RegisterRoutes(protected)
 		deps.TiresHandler.RegisterRoutes(protected)
+		deps.MissionControlHandler.RegisterRoutes(protected)
 		deps.IntelligenceHandler.RegisterRoutes(protected)
 	}
 

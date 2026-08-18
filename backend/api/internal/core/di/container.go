@@ -26,6 +26,7 @@ import (
 	identityinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/infrastructure"
 	identityhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/transport/http"
 	intelligenceapp "github.com/geevheit/intelligence360/backend/api/internal/modules/intelligence/application"
+	intelligenceinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/intelligence/infrastructure"
 	intelligencehttp "github.com/geevheit/intelligence360/backend/api/internal/modules/intelligence/transport/http"
 	inventoryapp "github.com/geevheit/intelligence360/backend/api/internal/modules/inventory/application"
 	inventoryinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/inventory/infrastructure"
@@ -33,6 +34,9 @@ import (
 	maintenanceapp "github.com/geevheit/intelligence360/backend/api/internal/modules/maintenance/application"
 	maintenanceinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/maintenance/infrastructure"
 	maintenancehttp "github.com/geevheit/intelligence360/backend/api/internal/modules/maintenance/transport/http"
+	missionapp "github.com/geevheit/intelligence360/backend/api/internal/modules/missioncontrol/application"
+	missioninfra "github.com/geevheit/intelligence360/backend/api/internal/modules/missioncontrol/infrastructure"
+	missionhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/missioncontrol/transport/http"
 	suppliersapp "github.com/geevheit/intelligence360/backend/api/internal/modules/suppliers/application"
 	suppliersinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/suppliers/infrastructure"
 	suppliershttp "github.com/geevheit/intelligence360/backend/api/internal/modules/suppliers/transport/http"
@@ -191,24 +195,40 @@ func (c *Container) HTTPRouter() *gin.Engine {
 		tiresapp.NewTireHistoryService(tiresStore.History()),
 	)
 
-	recommendationService := intelligenceapp.NewRecommendationService()
-	intelligenceHandler := intelligencehttp.NewHandler(recommendationService)
+	intelligenceStore := intelligenceinfra.NewMemoryStore()
+	intelligenceCore := intelligenceapp.NewIntelligenceService(
+		intelligenceStore.Anomalies(),
+		intelligenceStore.Risks(),
+		intelligenceStore.Opportunities(),
+		intelligenceStore.Recommendations(),
+		intelligenceStore.Insights(),
+	)
+	intelligenceHandler := intelligencehttp.NewHandler(
+		intelligenceapp.NewMetricService(intelligenceStore.Metrics()),
+		intelligenceCore,
+	)
+
+	missionStore := missioninfra.NewMemoryStore()
+	missionHandler := missionhttp.NewHandler(
+		missionapp.NewCommandService(missionStore.Items(), missionStore.Events(), missionStore.Actions(), missionStore.Snapshots(), missionStore.Idempotency()),
+	)
 
 	return corehttp.NewRouter(corehttp.RouterDependencies{
-		Config:              c.config,
-		Logger:              c.logger,
-		AssetsHandler:       assetsHandler,
-		IdentityHandler:     identityHandler,
-		AuthService:         authService,
-		ChecklistHandler:    checklistHandler,
-		FleetHandler:        fleetHandler,
-		FuelHandler:         fuelHandler,
-		FinancialHandler:    financialHandler,
-		CIOTHandler:         ciotHandler,
-		InventoryHandler:    inventoryHandler,
-		MaintenanceHandler:  maintenanceHandler,
-		SuppliersHandler:    suppliersHandler,
-		TiresHandler:        tiresHandler,
-		IntelligenceHandler: intelligenceHandler,
+		Config:                c.config,
+		Logger:                c.logger,
+		AssetsHandler:         assetsHandler,
+		IdentityHandler:       identityHandler,
+		AuthService:           authService,
+		ChecklistHandler:      checklistHandler,
+		FleetHandler:          fleetHandler,
+		FuelHandler:           fuelHandler,
+		FinancialHandler:      financialHandler,
+		CIOTHandler:           ciotHandler,
+		InventoryHandler:      inventoryHandler,
+		MaintenanceHandler:    maintenanceHandler,
+		SuppliersHandler:      suppliersHandler,
+		TiresHandler:          tiresHandler,
+		IntelligenceHandler:   intelligenceHandler,
+		MissionControlHandler: missionHandler,
 	})
 }

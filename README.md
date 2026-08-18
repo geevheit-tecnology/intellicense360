@@ -12,7 +12,7 @@ This repository follows the structure defined in [docs/estrutura projeto.md](doc
 - Modules layer: bounded contexts under `internal/modules`
 - Shared package: reusable technical primitives under `internal/shared`
 - Initial endpoint: `GET /health`
-- Initial intelligence endpoint: `GET /api/v1/mission-control/summary`
+- Mission Control endpoint: `GET /api/v1/mission-control/summary`
 
 ## Run Locally
 
@@ -26,7 +26,8 @@ Then check:
 
 ```bash
 curl http://localhost:8080/health
-curl http://localhost:8080/api/v1/mission-control/summary
+curl http://localhost:8080/api/v1/mission-control/summary \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Architecture Rule

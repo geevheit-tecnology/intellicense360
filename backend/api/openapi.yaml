@@ -905,10 +905,147 @@ paths:
           description: Asset created
   /api/v1/mission-control/summary:
     get:
-      summary: Current operational intelligence summary
+      summary: Mission Control operational summary
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: Mission Control summary
+  /api/v1/mission-control/items:
+    get:
+      summary: List Mission Control command items
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Command item page
+    post:
+      summary: Create Mission Control command item
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Command item created
+  /api/v1/mission-control/items/{id}:
+    get:
+      summary: Get Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item
+    patch:
+      summary: Update Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item updated
+  /api/v1/mission-control/items/{id}/acknowledge:
+    post:
+      summary: Acknowledge Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item acknowledged
+  /api/v1/mission-control/items/{id}/start:
+    post:
+      summary: Start Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item started
+  /api/v1/mission-control/items/{id}/resolve:
+    post:
+      summary: Resolve Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item resolved
+  /api/v1/mission-control/items/{id}/dismiss:
+    post:
+      summary: Dismiss Mission Control command item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command item dismissed
+  /api/v1/mission-control/items/{id}/actions:
+    get:
+      summary: List Mission Control command actions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command action page
+    post:
+      summary: Create Mission Control command action
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Command action created
+  /api/v1/mission-control/items/{id}/history:
+    get:
+      summary: List Mission Control append-only history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Command event page
+  /api/v1/mission-control/snapshot:
+    get:
+      summary: Get latest Mission Control snapshot
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Operational snapshot
+  /api/v1/mission-control/snapshot/rebuild:
+    post:
+      summary: Rebuild Mission Control snapshot
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Operational snapshot rebuilt
+  /api/v1/mission-control/recommendations:
+    get:
+      summary: List Mission Control recommendation items
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Recommendation command item page
+  /api/v1/mission-control/recommendations/evaluate:
+    post:
+      summary: Evaluate deterministic Mission Control recommendations
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Recommendation actions created
 components:
   securitySchemes:
     bearerAuth:
