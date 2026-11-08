@@ -3,6 +3,12 @@ info:
   title: Geevheit Intelligence 360 API
   version: 0.1.0
   description: API-first contract for the enterprise transportation intelligence platform.
+x-storage-profiles:
+  postgres:
+    description: Default durable runtime. Health, identity, fleet, drivers and document metadata routes are enabled.
+    modules: [identity, fleet, drivers, documents]
+  memory:
+    description: Explicit development demonstration of the original modules; records are volatile. Drivers and documents require PostgreSQL.
 paths:
   /health:
     get:
@@ -812,6 +818,16 @@ paths:
           description: Vehicle
     put:
       summary: Update fleet vehicle
+      description: Send the last returned version. Stale versions return 409 in PostgreSQL mode.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/Vehicle"
+                - type: object
+                  required: [version]
       security:
         - bearerAuth: []
       parameters:
@@ -819,6 +835,14 @@ paths:
       responses:
         "200":
           description: Vehicle updated
+        "400":
+          description: Invalid fields or references
+        "404":
+          description: Vehicle not found in the authenticated company
+        "409":
+          description: Stale version or duplicate vehicle identifiers
+        "500":
+          description: Internal persistence error
     delete:
       summary: Soft delete fleet vehicle
       security:
@@ -1046,6 +1070,733 @@ paths:
       responses:
         "201":
           description: Recommendation actions created
+  "/api/v1/drivers":
+    get:
+      summary: "List drivers"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "drivers.read"
+      parameters:
+        -
+          name: "search"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            maxLength: 200
+        -
+          name: "status"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            enum:
+              - "active"
+              - "inactive"
+        -
+          name: "vehicle_id"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+        -
+          name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 1000000
+            default: 1
+        -
+          name: "page_size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: "List drivers"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DriverProfilePage"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+      description: "Stable pagination sorted by created_at then id. The current vehicle allocation is not an exclusive reservation or a trip."
+    post:
+      summary: "Create drivers record"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "drivers.manage"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/DriverProfileWrite"
+      responses:
+        "201":
+          description: "Create drivers record"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DriverProfile"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+  "/api/v1/drivers/{id}":
+    get:
+      summary: "Get drivers record"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "drivers.read"
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Get drivers record"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DriverProfile"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+    put:
+      summary: "Update drivers record"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "drivers.manage"
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              allOf:
+                -
+                  "$ref": "#/components/schemas/DriverProfileWrite"
+                -
+                  type: "object"
+                  required:
+                    - "version"
+                  properties:
+                    version:
+                      type: "integer"
+                      format: "int64"
+                      minimum: 1
+      responses:
+        "200":
+          description: "Update drivers record"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DriverProfile"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+      description: "Full replacement of writable fields. Omit vehicle_id or send an empty string to clear the current allocation. Send the last returned version."
+    delete:
+      summary: "Soft delete drivers record"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "drivers.manage"
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+        -
+          name: "version"
+          in: "query"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+            minimum: 1
+          description: "Last returned version; stale values return 409."
+      responses:
+        "204":
+          description: "Soft delete drivers record"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+  "/api/v1/documents":
+    get:
+      summary: "List documents"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "documents.read"
+      parameters:
+        -
+          name: "search"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            maxLength: 200
+        -
+          name: "status"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            enum:
+              - "active"
+              - "archived"
+        -
+          name: "vehicle_id"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+        -
+          name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 1000000
+            default: 1
+        -
+          name: "page_size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            minimum: 1
+            maximum: 100
+            default: 20
+        -
+          name: "driver_id"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "uuid"
+        -
+          name: "kind"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            enum:
+              - "cnh"
+              - "crlv"
+              - "insurance"
+              - "other"
+        -
+          name: "expiry_status"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            enum:
+              - "expired"
+              - "due_soon"
+              - "valid"
+              - "no_expiry"
+              - "archived"
+          description: "Calculated using calendar dates in UTC and an inclusive 30-day window."
+      responses:
+        "200":
+          description: "List documents"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalDocumentPage"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+      description: "Stable pagination; empty pages retain total_items. Metadata only: no upload or external verification. Do not combine driver_id and vehicle_id filters."
+    post:
+      summary: "Create documents record"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "documents.manage"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/OperationalDocumentWrite"
+      responses:
+        "201":
+          description: "Create documents record"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalDocument"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+  "/api/v1/documents/{id}":
+    get:
+      summary: "Get documents record"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "documents.read"
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Get documents record"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalDocument"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+    put:
+      summary: "Update documents record"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "documents.manage"
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              allOf:
+                -
+                  "$ref": "#/components/schemas/OperationalDocumentWrite"
+                -
+                  type: "object"
+                  required:
+                    - "version"
+                  properties:
+                    version:
+                      type: "integer"
+                      format: "int64"
+                      minimum: 1
+      responses:
+        "200":
+          description: "Update documents record"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalDocument"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+      description: "Full replacement of writable fields. Send the last returned version. Document ownership cannot be changed."
+    delete:
+      summary: "Soft delete documents record"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "documents.manage"
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+        -
+          name: "version"
+          in: "query"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+            minimum: 1
+          description: "Last returned version; stale values return 409."
+      responses:
+        "204":
+          description: "Soft delete documents record"
+        "400":
+          description: "Invalid fields, dates, filters or missing version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "403":
+          description: "Missing permission"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "404":
+          description: "Resource or reference not found in authenticated company"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "409":
+          description: "Duplicate identifiers or stale version"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
 components:
   securitySchemes:
     bearerAuth:
@@ -1089,6 +1840,242 @@ components:
         type: integer
         default: 20
   schemas:
+    OperationalError:
+      type: "object"
+      required:
+        - "error"
+      properties:
+        error:
+          type: "string"
+    DriverProfileWrite:
+      type: "object"
+      required:
+        - "code"
+        - "name"
+      properties:
+        code:
+          type: "string"
+          minLength: 1
+          maxLength: 64
+          description: "Trimmed and normalized to uppercase. Unique within company among records not deleted."
+        name:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        tax_id:
+          type: "string"
+          description: "Optional formatted identifier; normalized to 11 digits. No external identity verification."
+        phone:
+          type: "string"
+          maxLength: 40
+        email:
+          type: "string"
+          format: "email"
+          description: "Optional; omit or send empty to clear."
+        vehicle_id:
+          anyOf:
+            -
+              type: "string"
+              format: "uuid"
+            -
+              enum:
+                - ""
+        status:
+          type: "string"
+          enum:
+            - "active"
+            - "inactive"
+          default: "active"
+        notes:
+          type: "string"
+          maxLength: 4000
+    OperationalDocumentWrite:
+      type: "object"
+      required:
+        - "kind"
+        - "title"
+        - "number"
+      oneOf:
+        -
+          required:
+            - "driver_id"
+          not:
+            required:
+              - "vehicle_id"
+        -
+          required:
+            - "vehicle_id"
+          not:
+            required:
+              - "driver_id"
+      properties:
+        driver_id:
+          type: "string"
+          format: "uuid"
+          description: "Required for cnh; omit vehicle_id. Owner cannot change after creation."
+        vehicle_id:
+          type: "string"
+          format: "uuid"
+          description: "Required for crlv; omit driver_id. Owner cannot change after creation."
+        kind:
+          type: "string"
+          enum:
+            - "cnh"
+            - "crlv"
+            - "insurance"
+            - "other"
+        title:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        number:
+          type: "string"
+          minLength: 1
+          maxLength: 100
+        issuer:
+          type: "string"
+          maxLength: 200
+        issued_on:
+          type:
+            - "string"
+            - "null"
+          format: "date"
+          description: "YYYY-MM-DD, year 1900 or later; null means not informed."
+        expires_on:
+          type:
+            - "string"
+            - "null"
+          format: "date"
+          description: "YYYY-MM-DD; cannot precede issued_on. Null means not informed, not confirmed compliance."
+        status:
+          type: "string"
+          enum:
+            - "active"
+            - "archived"
+          default: "active"
+        notes:
+          type: "string"
+          maxLength: 4000
+    DriverProfile:
+      allOf:
+        -
+          "$ref": "#/components/schemas/DriverProfileWrite"
+        -
+          type: "object"
+          required:
+            - "id"
+            - "tenant_id"
+            - "created_at"
+            - "updated_at"
+            - "version"
+          properties:
+            id:
+              type: "string"
+              format: "uuid"
+              readOnly: true
+            tenant_id:
+              type: "string"
+              format: "uuid"
+              readOnly: true
+            created_at:
+              type: "string"
+              format: "date-time"
+              readOnly: true
+            updated_at:
+              type: "string"
+              format: "date-time"
+              readOnly: true
+            version:
+              type: "integer"
+              format: "int64"
+              minimum: 1
+              readOnly: true
+    DriverProfilePage:
+      type: "object"
+      required:
+        - "items"
+        - "page"
+        - "page_size"
+        - "total_items"
+        - "total_pages"
+      properties:
+        items:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/DriverProfile"
+        page:
+          type: "integer"
+        page_size:
+          type: "integer"
+        total_items:
+          type: "integer"
+        total_pages:
+          type: "integer"
+    OperationalDocument:
+      allOf:
+        -
+          "$ref": "#/components/schemas/OperationalDocumentWrite"
+        -
+          type: "object"
+          required:
+            - "id"
+            - "tenant_id"
+            - "created_at"
+            - "updated_at"
+            - "version"
+            - "expiry_status"
+          properties:
+            id:
+              type: "string"
+              format: "uuid"
+              readOnly: true
+            tenant_id:
+              type: "string"
+              format: "uuid"
+              readOnly: true
+            created_at:
+              type: "string"
+              format: "date-time"
+              readOnly: true
+            updated_at:
+              type: "string"
+              format: "date-time"
+              readOnly: true
+            version:
+              type: "integer"
+              format: "int64"
+              minimum: 1
+              readOnly: true
+            expiry_status:
+              type: "string"
+              enum:
+                - "expired"
+                - "due_soon"
+                - "valid"
+                - "no_expiry"
+                - "archived"
+              readOnly: true
+    OperationalDocumentPage:
+      type: "object"
+      required:
+        - "items"
+        - "page"
+        - "page_size"
+        - "total_items"
+        - "total_pages"
+      properties:
+        items:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/OperationalDocument"
+        page:
+          type: "integer"
+        page_size:
+          type: "integer"
+        total_items:
+          type: "integer"
+        total_pages:
+          type: "integer"
     LoginRequest:
       type: object
       required: [email, password]
@@ -1158,8 +2145,13 @@ components:
           type: string
     Vehicle:
       type: object
-      required: [license_plate, renavam, chassis]
+      required: [license_plate, renavam, chassis, category_id, type_id, brand_id, model_id]
       properties:
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Last returned version; required for PUT optimistic locking.
         id:
           type: string
         tenant_id:

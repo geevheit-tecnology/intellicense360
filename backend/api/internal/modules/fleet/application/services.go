@@ -2,8 +2,7 @@ package application
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
+	"github.com/google/uuid"
 	"strings"
 	"time"
 
@@ -223,8 +222,4 @@ func normalizeQuery(query ports.Query) ports.Query {
 	return query
 }
 
-func newID(prefix string) string {
-	var b [16]byte
-	_, _ = rand.Read(b[:])
-	return prefix + "_" + hex.EncodeToString(b[:])
-}
+func newID(_ string) string { return uuid.NewString() }

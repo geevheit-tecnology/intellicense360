@@ -31,3 +31,25 @@ func TestLoadHTTPAddrFallback(t *testing.T) {
 		t.Fatalf("expected :8080 fallback, got %q", cfg.HTTPAddr)
 	}
 }
+
+func TestPersistentConfigurationFailsClosed(t *testing.T) {
+	tests := []struct {
+		name  string
+		cfg   Config
+		valid bool
+	}{
+		{"missing database", Config{StorageDriver: "postgres", AuthSecret: "12345678901234567890123456789012"}, false},
+		{"missing secret", Config{StorageDriver: "postgres", DatabaseURL: "postgres://localhost/db"}, false},
+		{"demo secret", Config{StorageDriver: "postgres", DatabaseURL: "postgres://localhost/db", AuthSecret: "development-identity-secret"}, false},
+		{"memory production", Config{Env: "production", StorageDriver: "memory"}, false},
+		{"memory development", Config{StorageDriver: "memory"}, true},
+		{"postgres", Config{StorageDriver: "postgres", DatabaseURL: "postgres://localhost/db", AuthSecret: "12345678901234567890123456789012"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cfg.Validate() == nil; got != tt.valid {
+				t.Fatalf("valid=%v, expected %v", got, tt.valid)
+			}
+		})
+	}
+}

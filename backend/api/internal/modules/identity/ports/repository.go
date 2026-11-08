@@ -59,3 +59,8 @@ type AuditRepository interface {
 	Create(ctx context.Context, event domain.AuditLog) (domain.AuditLog, error)
 	List(ctx context.Context, tenantID string) ([]domain.AuditLog, error)
 }
+
+// Transactions defines the application transaction boundary without a SQL dependency.
+type Transactions interface {
+	Run(context.Context, func(context.Context) error) error
+}

@@ -2,4 +2,4 @@
 set -eu
 
 cd "$(dirname "$0")/../backend/api"
-go run ./cmd/api
+STORAGE_DRIVER="${STORAGE_DRIVER:-memory}" go run ./cmd/api

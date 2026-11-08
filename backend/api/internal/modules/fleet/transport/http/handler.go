@@ -1,6 +1,8 @@
 package http
 
 import (
+	"errors"
+	"github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/application"
 	"net/http"
 	"strconv"
 
@@ -120,7 +122,10 @@ func (h Handler) updateBrand(c *gin.Context) {
 	respond(c, http.StatusOK, saved, err)
 }
 func (h Handler) deleteBrand(c *gin.Context) {
-	_ = h.brands.Delete(c.Request.Context(), tenantID(c), c.Param("id"))
+	if err := h.brands.Delete(c.Request.Context(), tenantID(c), c.Param("id")); err != nil {
+		respond(c, 0, nil, err)
+		return
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -148,7 +153,10 @@ func (h Handler) updateModel(c *gin.Context) {
 	respond(c, http.StatusOK, saved, err)
 }
 func (h Handler) deleteModel(c *gin.Context) {
-	_ = h.models.Delete(c.Request.Context(), tenantID(c), c.Param("id"))
+	if err := h.models.Delete(c.Request.Context(), tenantID(c), c.Param("id")); err != nil {
+		respond(c, 0, nil, err)
+		return
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -176,7 +184,10 @@ func (h Handler) updateCategory(c *gin.Context) {
 	respond(c, http.StatusOK, saved, err)
 }
 func (h Handler) deleteCategory(c *gin.Context) {
-	_ = h.categories.Delete(c.Request.Context(), tenantID(c), c.Param("id"))
+	if err := h.categories.Delete(c.Request.Context(), tenantID(c), c.Param("id")); err != nil {
+		respond(c, 0, nil, err)
+		return
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -204,7 +215,10 @@ func (h Handler) updateType(c *gin.Context) {
 	respond(c, http.StatusOK, saved, err)
 }
 func (h Handler) deleteType(c *gin.Context) {
-	_ = h.types.Delete(c.Request.Context(), tenantID(c), c.Param("id"))
+	if err := h.types.Delete(c.Request.Context(), tenantID(c), c.Param("id")); err != nil {
+		respond(c, 0, nil, err)
+		return
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -232,7 +246,10 @@ func (h Handler) updateAsset(c *gin.Context) {
 	respond(c, http.StatusOK, saved, err)
 }
 func (h Handler) deleteAsset(c *gin.Context) {
-	_ = h.assets.Delete(c.Request.Context(), tenantID(c), c.Param("id"))
+	if err := h.assets.Delete(c.Request.Context(), tenantID(c), c.Param("id")); err != nil {
+		respond(c, 0, nil, err)
+		return
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -252,7 +269,20 @@ func bind(c *gin.Context, req any) bool {
 
 func respond(c *gin.Context, status int, payload any, err error) {
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		status := http.StatusInternalServerError
+		message := "internal server error"
+		switch {
+		case errors.Is(err, application.ErrNotFound):
+			status = http.StatusNotFound
+			message = err.Error()
+		case errors.Is(err, application.ErrValidation):
+			status = http.StatusBadRequest
+			message = err.Error()
+		case errors.Is(err, application.ErrConflict), errors.Is(err, application.ErrLicensePlateTaken), errors.Is(err, application.ErrChassisTaken), errors.Is(err, application.ErrRenavamTaken):
+			status = http.StatusConflict
+			message = err.Error()
+		}
+		c.JSON(status, gin.H{"error": message})
 		return
 	}
 	c.JSON(status, payload)

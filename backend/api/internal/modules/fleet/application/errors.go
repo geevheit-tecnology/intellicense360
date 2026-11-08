@@ -3,6 +3,7 @@ package application
 import "errors"
 
 var (
+	ErrConflict          = errors.New("fleet resource conflict")
 	ErrNotFound          = errors.New("fleet resource not found")
 	ErrValidation        = errors.New("fleet validation failed")
 	ErrLicensePlateTaken = errors.New("license plate already exists")

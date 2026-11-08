@@ -1,6 +1,8 @@
 package http
 
 import (
+	"errors"
+	"github.com/geevheit/intelligence360/backend/api/internal/modules/identity/application"
 	"net/http"
 
 	"github.com/geevheit/intelligence360/backend/api/internal/core/middleware"
@@ -128,14 +130,18 @@ func (h Handler) createUser(c *gin.Context) {
 	}
 	user, err := h.users.Create(c.Request.Context(), domain.User{TenantID: tenantID(c), Name: req.Name, Email: req.Email}, req.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, user)
 }
 
 func (h Handler) listUsers(c *gin.Context) {
-	users, _ := h.users.List(c.Request.Context(), tenantID(c))
+	users, err := h.users.List(c.Request.Context(), tenantID(c))
+	if err != nil {
+		respondError(c, err)
+		return
+	}
 	c.JSON(http.StatusOK, users)
 }
 func (h Handler) getUser(c *gin.Context) {
@@ -155,13 +161,16 @@ func (h Handler) updateUser(c *gin.Context) {
 	user.TenantID = tenantID(c)
 	saved, err := h.users.Update(c.Request.Context(), user)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, saved)
 }
 func (h Handler) deleteUser(c *gin.Context) {
-	_ = h.users.Delete(c.Request.Context(), tenantID(c), c.Param("id"))
+	if err := h.users.Delete(c.Request.Context(), tenantID(c), c.Param("id")); err != nil {
+		respondError(c, err)
+		return
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -173,13 +182,17 @@ func (h Handler) createRole(c *gin.Context) {
 	role.TenantID = tenantID(c)
 	saved, err := h.roles.Create(c.Request.Context(), role)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, saved)
 }
 func (h Handler) listRoles(c *gin.Context) {
-	roles, _ := h.roles.List(c.Request.Context(), tenantID(c))
+	roles, err := h.roles.List(c.Request.Context(), tenantID(c))
+	if err != nil {
+		respondError(c, err)
+		return
+	}
 	c.JSON(http.StatusOK, roles)
 }
 func (h Handler) updateRole(c *gin.Context) {
@@ -191,13 +204,16 @@ func (h Handler) updateRole(c *gin.Context) {
 	role.TenantID = tenantID(c)
 	saved, err := h.roles.Update(c.Request.Context(), role)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, saved)
 }
 func (h Handler) deleteRole(c *gin.Context) {
-	_ = h.roles.Delete(c.Request.Context(), tenantID(c), c.Param("id"))
+	if err := h.roles.Delete(c.Request.Context(), tenantID(c), c.Param("id")); err != nil {
+		respondError(c, err)
+		return
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -208,13 +224,17 @@ func (h Handler) createPermission(c *gin.Context) {
 	}
 	saved, err := h.permissions.Create(c.Request.Context(), permission)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, saved)
 }
 func (h Handler) listPermissions(c *gin.Context) {
-	permissions, _ := h.permissions.List(c.Request.Context())
+	permissions, err := h.permissions.List(c.Request.Context())
+	if err != nil {
+		respondError(c, err)
+		return
+	}
 	c.JSON(http.StatusOK, permissions)
 }
 func (h Handler) updatePermission(c *gin.Context) {
@@ -225,13 +245,16 @@ func (h Handler) updatePermission(c *gin.Context) {
 	permission.Key = c.Param("key")
 	saved, err := h.permissions.Update(c.Request.Context(), permission)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, saved)
 }
 func (h Handler) deletePermission(c *gin.Context) {
-	_ = h.permissions.Delete(c.Request.Context(), c.Param("key"))
+	if err := h.permissions.Delete(c.Request.Context(), c.Param("key")); err != nil {
+		respondError(c, err)
+		return
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -242,13 +265,17 @@ func (h Handler) createTenant(c *gin.Context) {
 	}
 	saved, err := h.tenants.Create(c.Request.Context(), tenant)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, saved)
 }
 func (h Handler) listTenants(c *gin.Context) {
-	tenants, _ := h.tenants.List(c.Request.Context())
+	tenants, err := h.tenants.List(c.Request.Context())
+	if err != nil {
+		respondError(c, err)
+		return
+	}
 	c.JSON(http.StatusOK, tenants)
 }
 func (h Handler) updateTenant(c *gin.Context) {
@@ -259,17 +286,24 @@ func (h Handler) updateTenant(c *gin.Context) {
 	tenant.ID = c.Param("id")
 	saved, err := h.tenants.Update(c.Request.Context(), tenant)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, saved)
 }
 func (h Handler) deleteTenant(c *gin.Context) {
-	_ = h.tenants.Delete(c.Request.Context(), c.Param("id"))
+	if err := h.tenants.Delete(c.Request.Context(), c.Param("id")); err != nil {
+		respondError(c, err)
+		return
+	}
 	c.Status(http.StatusNoContent)
 }
 func (h Handler) listAudit(c *gin.Context) {
-	logs, _ := h.audit.List(c.Request.Context(), tenantID(c))
+	logs, err := h.audit.List(c.Request.Context(), tenantID(c))
+	if err != nil {
+		respondError(c, err)
+		return
+	}
 	c.JSON(http.StatusOK, logs)
 }
 
@@ -294,4 +328,24 @@ func actorID(c *gin.Context) string {
 	value, _ := c.Get(string(contextkeys.ActorID))
 	actorID, _ := value.(string)
 	return actorID
+}
+
+func respondError(c *gin.Context, err error) {
+	status := http.StatusInternalServerError
+	message := "internal server error"
+	switch {
+	case errors.Is(err, application.ErrNotFound):
+		status = http.StatusNotFound
+		message = err.Error()
+	case errors.Is(err, application.ErrValidation), errors.Is(err, application.ErrPasswordPolicy):
+		status = http.StatusBadRequest
+		message = err.Error()
+	case errors.Is(err, application.ErrConflict):
+		status = http.StatusConflict
+		message = err.Error()
+	case errors.Is(err, application.ErrForbidden):
+		status = http.StatusForbidden
+		message = err.Error()
+	}
+	c.JSON(status, gin.H{"error": message})
 }

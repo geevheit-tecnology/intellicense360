@@ -1,6 +1,8 @@
 package http
 
 import (
+	documentshttp "github.com/geevheit/intelligence360/backend/api/internal/modules/documents/transport/http"
+	drivershttp "github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/transport/http"
 	stdhttp "net/http"
 	"time"
 
@@ -25,6 +27,8 @@ import (
 )
 
 type RouterDependencies struct {
+	DriversHandler        *drivershttp.Handler
+	DocumentsHandler      *documentshttp.Handler
 	Config                config.Config
 	Logger                logger.Logger
 	AssetsHandler         assetshttp.Handler
@@ -72,10 +76,20 @@ func NewRouter(deps RouterDependencies) *gin.Engine {
 	protected := v1.Group("")
 	protected.Use(middleware.Authentication(deps.AuthService), middleware.Tenant())
 	{
-		deps.AssetsHandler.RegisterRoutes(protected)
 		deps.IdentityHandler.RegisterProtectedRoutes(protected)
-		deps.ChecklistHandler.RegisterRoutes(protected)
 		deps.FleetHandler.RegisterRoutes(protected)
+		if deps.DriversHandler != nil {
+			deps.DriversHandler.RegisterRoutes(protected)
+		}
+		if deps.DocumentsHandler != nil {
+			deps.DocumentsHandler.RegisterRoutes(protected)
+		}
+		// Only modules with durable adapters are exposed in PostgreSQL mode.
+		if deps.Config.StorageDriver == "postgres" {
+			return router
+		}
+		deps.AssetsHandler.RegisterRoutes(protected)
+		deps.ChecklistHandler.RegisterRoutes(protected)
 		deps.FuelHandler.RegisterRoutes(protected)
 		deps.FinancialHandler.RegisterRoutes(protected)
 		deps.CIOTHandler.RegisterRoutes(protected)

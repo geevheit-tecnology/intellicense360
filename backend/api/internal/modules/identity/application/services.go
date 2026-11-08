@@ -26,50 +26,99 @@ type AuthService struct {
 	tokens        TokenService
 	accessTTL     time.Duration
 	refreshTTL    time.Duration
+	transactions  ports.Transactions
 }
 
 func NewAuthService(users ports.UserRepository, roles ports.RoleRepository, sessions ports.SessionRepository, refreshTokens ports.RefreshTokenRepository, tokens TokenService) AuthService {
 	return AuthService{users: users, roles: roles, sessions: sessions, refreshTokens: refreshTokens, tokens: tokens, accessTTL: 15 * time.Minute, refreshTTL: 24 * time.Hour * 30}
 }
 
+func (s AuthService) WithTransactions(tx ports.Transactions) AuthService {
+	s.transactions = tx
+	return s
+}
+func (s AuthService) run(ctx context.Context, fn func(context.Context) error) error {
+	if s.transactions != nil {
+		return s.transactions.Run(ctx, fn)
+	}
+	return fn(ctx)
+}
 func (s AuthService) Login(ctx context.Context, tenantID string, email string, password string) (ports.AuthResult, error) {
 	user, err := s.users.FindByEmail(ctx, tenantID, email)
 	if err != nil || user.Status != domain.UserStatusActive || !verifyPassword(user.PasswordHash, password) {
 		return ports.AuthResult{}, ErrInvalidCredentials
 	}
-	return s.createSession(ctx, user)
+	var result ports.AuthResult
+	err = s.run(ctx, func(ctx context.Context) error { var e error; result, e = s.createSession(ctx, user); return e })
+	return result, err
 }
 
 func (s AuthService) Refresh(ctx context.Context, refreshToken string) (ports.AuthResult, error) {
-	stored, err := s.refreshTokens.FindByHash(ctx, hashValue(refreshToken))
-	if err != nil || stored.RevokedAt != nil || stored.ExpiresAt.Before(time.Now()) {
-		return ports.AuthResult{}, ErrInvalidToken
-	}
-	user, err := s.users.FindByID(ctx, stored.TenantID, stored.UserID)
-	if err != nil {
-		return ports.AuthResult{}, err
-	}
-	result, err := s.createSession(ctx, user)
-	if err != nil {
-		return ports.AuthResult{}, err
-	}
-	_ = s.refreshTokens.Revoke(ctx, stored.ID, hashValue(result.RefreshToken))
-	return result, nil
+	var result ports.AuthResult
+	err := s.run(ctx, func(ctx context.Context) error {
+		stored, err := s.refreshTokens.FindByHash(ctx, hashValue(refreshToken))
+		if err != nil || stored.RevokedAt != nil || !stored.ExpiresAt.After(time.Now()) {
+			return ErrInvalidToken
+		}
+		session, err := s.sessions.FindByID(ctx, stored.SessionID)
+		if err != nil || session.RevokedAt != nil || !session.ExpiresAt.After(time.Now()) {
+			return ErrInvalidToken
+		}
+		user, err := s.users.FindByID(ctx, stored.TenantID, stored.UserID)
+		if err != nil || user.Status != domain.UserStatusActive {
+			return ErrInvalidToken
+		}
+		result, err = s.createSession(ctx, user)
+		if err != nil {
+			return err
+		}
+		replacement, err := s.refreshTokens.FindByHash(ctx, hashValue(result.RefreshToken))
+		if err != nil {
+			return err
+		}
+		if err := s.refreshTokens.Revoke(ctx, stored.ID, replacement.ID); err != nil {
+			return err
+		}
+		return s.sessions.Revoke(ctx, stored.SessionID)
+	})
+	return result, err
 }
 
 func (s AuthService) Logout(ctx context.Context, refreshToken string) error {
-	stored, err := s.refreshTokens.FindByHash(ctx, hashValue(refreshToken))
-	if err != nil {
-		return ErrInvalidToken
-	}
-	if err := s.refreshTokens.RevokeSession(ctx, stored.SessionID); err != nil {
-		return err
-	}
-	return s.sessions.Revoke(ctx, stored.SessionID)
+	return s.run(ctx, func(ctx context.Context) error {
+		stored, err := s.refreshTokens.FindByHash(ctx, hashValue(refreshToken))
+		if err != nil {
+			return ErrInvalidToken
+		}
+		if err := s.refreshTokens.RevokeSession(ctx, stored.SessionID); err != nil {
+			return err
+		}
+		return s.sessions.Revoke(ctx, stored.SessionID)
+	})
 }
 
 func (s AuthService) ValidateAccessToken(ctx context.Context, accessToken string) (ports.AuthClaims, error) {
-	return s.tokens.Validate(ctx, accessToken)
+	claims, err := s.tokens.Validate(ctx, accessToken)
+	if err != nil {
+		return ports.AuthClaims{}, err
+	}
+	session, err := s.sessions.FindByID(ctx, claims.SessionID)
+	if err != nil || session.TenantID != claims.TenantID || session.UserID != claims.UserID || session.RevokedAt != nil || !session.ExpiresAt.After(time.Now()) {
+		return ports.AuthClaims{}, ErrInvalidToken
+	}
+	user, err := s.users.FindByID(ctx, claims.TenantID, claims.UserID)
+	if err != nil || user.Status != domain.UserStatusActive {
+		return ports.AuthClaims{}, ErrInvalidToken
+	}
+	permissions, err := s.roles.PermissionsForUser(ctx, claims.TenantID, claims.UserID)
+	if err != nil {
+		return ports.AuthClaims{}, err
+	}
+	claims.Permissions = []string{}
+	for _, p := range permissions {
+		claims.Permissions = append(claims.Permissions, p.Key)
+	}
+	return claims, nil
 }
 
 func (s AuthService) Me(ctx context.Context, tenantID string, userID string) (domain.User, error) {
@@ -82,7 +131,10 @@ func (s AuthService) createSession(ctx context.Context, user domain.User) (ports
 	if err != nil {
 		return ports.AuthResult{}, err
 	}
-	perms, _ := s.roles.PermissionsForUser(ctx, user.TenantID, user.ID)
+	perms, err := s.roles.PermissionsForUser(ctx, user.TenantID, user.ID)
+	if err != nil {
+		return ports.AuthResult{}, err
+	}
 	permissionKeys := make([]string, 0, len(perms))
 	for _, permission := range perms {
 		permissionKeys = append(permissionKeys, permission.Key)
@@ -115,7 +167,11 @@ func (s UserService) Create(ctx context.Context, user domain.User, password stri
 	}
 	now := time.Now().UTC()
 	user.ID = newID("usr")
-	user.PasswordHash = hashPassword(password)
+	hash, err := HashPassword(password)
+	if err != nil {
+		return domain.User{}, err
+	}
+	user.PasswordHash = hash
 	user.Status = domain.UserStatusActive
 	user.CreatedAt = now
 	user.UpdatedAt = now

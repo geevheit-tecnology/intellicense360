@@ -1,6 +1,7 @@
 package di
 
 import (
+	"database/sql"
 	"github.com/geevheit/intelligence360/backend/api/internal/core/config"
 	corehttp "github.com/geevheit/intelligence360/backend/api/internal/core/http"
 	"github.com/geevheit/intelligence360/backend/api/internal/core/logger"
@@ -13,17 +14,27 @@ import (
 	ciotapp "github.com/geevheit/intelligence360/backend/api/internal/modules/ciot/application"
 	ciotinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/ciot/infrastructure"
 	ciothttp "github.com/geevheit/intelligence360/backend/api/internal/modules/ciot/transport/http"
+	documentsapp "github.com/geevheit/intelligence360/backend/api/internal/modules/documents/application"
+	documentspg "github.com/geevheit/intelligence360/backend/api/internal/modules/documents/infrastructure/postgres"
+	documentshttp "github.com/geevheit/intelligence360/backend/api/internal/modules/documents/transport/http"
+	driversapp "github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/application"
+	driverspg "github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/infrastructure/postgres"
+	drivershttp "github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/transport/http"
 	financialapp "github.com/geevheit/intelligence360/backend/api/internal/modules/financial/application"
 	financialinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/financial/infrastructure"
 	financialhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/financial/transport/http"
 	fleetapp "github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/application"
 	fleetinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/infrastructure"
+	fleetpg "github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/infrastructure/postgres"
+	fleetports "github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/ports"
 	fleethttp "github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/transport/http"
 	fuelapp "github.com/geevheit/intelligence360/backend/api/internal/modules/fuel/application"
 	fuelinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/fuel/infrastructure"
 	fuelhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/fuel/transport/http"
 	identityapp "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/application"
 	identityinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/infrastructure"
+	identitypg "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/infrastructure/postgres"
+	identityports "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/ports"
 	identityhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/identity/transport/http"
 	intelligenceapp "github.com/geevheit/intelligence360/backend/api/internal/modules/intelligence/application"
 	intelligenceinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/intelligence/infrastructure"
@@ -43,10 +54,12 @@ import (
 	tiresapp "github.com/geevheit/intelligence360/backend/api/internal/modules/tires/application"
 	tiresinfra "github.com/geevheit/intelligence360/backend/api/internal/modules/tires/infrastructure"
 	tireshttp "github.com/geevheit/intelligence360/backend/api/internal/modules/tires/transport/http"
+	platform "github.com/geevheit/intelligence360/backend/api/internal/platform/postgres"
 	"github.com/gin-gonic/gin"
 )
 
 type Container struct {
+	db     *sql.DB
 	config config.Config
 	logger logger.Logger
 }
@@ -58,15 +71,36 @@ func NewContainer(cfg config.Config) *Container {
 	}
 }
 
+func (c *Container) WithDatabase(db *sql.DB) *Container { c.db = db; return c }
+
 func (c *Container) HTTPRouter() *gin.Engine {
-	identityStore := identityinfra.NewMemoryStore()
+	var users identityports.UserRepository
+	var roles identityports.RoleRepository
+	var permissions identityports.PermissionRepository
+	var tenants identityports.TenantRepository
+	var sessions identityports.SessionRepository
+	var refreshTokens identityports.RefreshTokenRepository
+	var audit identityports.AuditRepository
+	if c.db != nil {
+		store := identitypg.NewStore(c.db)
+		users, roles, permissions, tenants, sessions, refreshTokens, audit = store.Users(), store.Roles(), store.Permissions(), store.Tenants(), store.Sessions(), store.RefreshTokens(), store.Audit()
+	} else {
+		if c.config.StorageDriver != "memory" {
+			panic("postgres storage requires a database")
+		}
+		store := identityinfra.NewMemoryStore()
+		users, roles, permissions, tenants, sessions, refreshTokens, audit = store.Users(), store.Roles(), store.Permissions(), store.Tenants(), store.Sessions(), store.RefreshTokens(), store.Audit()
+	}
 	tokenService := identityapp.NewTokenService(c.config.AuthIssuer, c.config.AuthSecret)
-	authService := identityapp.NewAuthService(identityStore.Users(), identityStore.Roles(), identityStore.Sessions(), identityStore.RefreshTokens(), tokenService)
-	userService := identityapp.NewUserService(identityStore.Users())
-	roleService := identityapp.NewRoleService(identityStore.Roles())
-	permissionService := identityapp.NewPermissionService(identityStore.Permissions())
-	tenantService := identityapp.NewTenantService(identityStore.Tenants())
-	auditService := identityapp.NewAuditService(identityStore.Audit())
+	authService := identityapp.NewAuthService(users, roles, sessions, refreshTokens, tokenService)
+	if c.db != nil {
+		authService = authService.WithTransactions(platform.Transactions{DB: c.db})
+	}
+	userService := identityapp.NewUserService(users)
+	roleService := identityapp.NewRoleService(roles)
+	permissionService := identityapp.NewPermissionService(permissions)
+	tenantService := identityapp.NewTenantService(tenants)
+	auditService := identityapp.NewAuditService(audit)
 	identityHandler := identityhttp.NewHandler(authService, userService, roleService, permissionService, tenantService, auditService)
 
 	assetsStore := assetsinfra.NewMemoryStore()
@@ -96,15 +130,38 @@ func (c *Container) HTTPRouter() *gin.Engine {
 		checklistapp.NewChecklistHistoryService(checklistStore.History()),
 	)
 
-	fleetStore := fleetinfra.NewMemoryStore()
+	var vehicles fleetports.VehicleRepository
+	var brands fleetports.VehicleBrandRepository
+	var models fleetports.VehicleModelRepository
+	var categories fleetports.VehicleCategoryRepository
+	var types fleetports.VehicleTypeRepository
+	var fleetAssets fleetports.AssetRepository
+	if c.db != nil {
+		store := fleetpg.NewStore(c.db)
+		vehicles, brands, models, categories, types, fleetAssets = store.Vehicles(), store.Brands(), store.Models(), store.Categories(), store.Types(), store.Assets()
+	} else {
+		store := fleetinfra.NewMemoryStore()
+		vehicles, brands, models, categories, types, fleetAssets = store.Vehicles(), store.Brands(), store.Models(), store.Categories(), store.Types(), store.Assets()
+	}
+	fleetService := fleetapp.NewVehicleService(vehicles)
 	fleetHandler := fleethttp.NewHandler(
-		fleetapp.NewVehicleService(fleetStore.Vehicles()),
-		fleetapp.NewVehicleBrandService(fleetStore.Brands()),
-		fleetapp.NewVehicleModelService(fleetStore.Models()),
-		fleetapp.NewVehicleCategoryService(fleetStore.Categories()),
-		fleetapp.NewVehicleTypeService(fleetStore.Types()),
-		fleetapp.NewAssetService(fleetStore.Assets()),
+		fleetService,
+		fleetapp.NewVehicleBrandService(brands),
+		fleetapp.NewVehicleModelService(models),
+		fleetapp.NewVehicleCategoryService(categories),
+		fleetapp.NewVehicleTypeService(types),
+		fleetapp.NewAssetService(fleetAssets),
 	)
+
+	var driversHandler *drivershttp.Handler
+	var documentsHandler *documentshttp.Handler
+	if c.db != nil {
+		tx := platform.Transactions{DB: c.db}
+		driversService := driversapp.NewService(driverspg.NewRepository(c.db), driverVehicleAccess(fleetService), tx, driverAudit{service: auditService})
+		driversHandler = drivershttp.NewHandler(driversService)
+		documentsService := documentsapp.NewService(documentspg.NewRepository(c.db), documentSubjects{drivers: driversService, fleet: fleetService}, tx, documentAudit{service: auditService})
+		documentsHandler = documentshttp.NewHandler(documentsService)
+	}
 
 	fuelStore := fuelinfra.NewMemoryStore()
 	fuelHandler := fuelhttp.NewHandler(
@@ -215,6 +272,8 @@ func (c *Container) HTTPRouter() *gin.Engine {
 
 	return corehttp.NewRouter(corehttp.RouterDependencies{
 		Config:                c.config,
+		DriversHandler:        driversHandler,
+		DocumentsHandler:      documentsHandler,
 		Logger:                c.logger,
 		AssetsHandler:         assetsHandler,
 		IdentityHandler:       identityHandler,

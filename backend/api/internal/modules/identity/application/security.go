@@ -6,6 +6,8 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"strconv"
 	"strings"
 	"time"
@@ -13,24 +15,26 @@ import (
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/identity/domain"
 )
 
-func newID(prefix string) string {
-	var b [16]byte
-	_, _ = rand.Read(b[:])
-	return prefix + "_" + hex.EncodeToString(b[:])
-}
+func newID(_ string) string { return uuid.NewString() }
 
 func hashValue(value string) string {
 	sum := sha256.Sum256([]byte(value))
 	return hex.EncodeToString(sum[:])
 }
 
-func hashPassword(password string) string {
-	salt := newID("salt")
-	sum := sha256.Sum256([]byte(salt + ":" + password))
-	return salt + ":" + hex.EncodeToString(sum[:])
+// HashPassword is shared by controlled provisioning and user creation.
+func HashPassword(password string) (string, error) {
+	if err := validatePassword(domain.PasswordPolicy{MinLength: 8, RequireNumber: true}, password); err != nil {
+		return "", err
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hash), err
 }
-
 func verifyPassword(hash string, password string) bool {
+	if strings.HasPrefix(hash, "$2") {
+		return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
+	}
+	// Compatibility for the explicitly selected in-memory development adapter.
 	parts := strings.Split(hash, ":")
 	if len(parts) != 2 {
 		return false

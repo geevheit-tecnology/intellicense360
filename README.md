@@ -12,23 +12,32 @@ This repository follows the structure defined in [docs/estrutura projeto.md](doc
 - Modules layer: bounded contexts under `internal/modules`
 - Shared package: reusable technical primitives under `internal/shared`
 - Initial endpoint: `GET /health`
-- Mission Control endpoint: `GET /api/v1/mission-control/summary`
+- Mission Control endpoint in memory demo mode: `GET /api/v1/mission-control/summary`
 
 ## Run Locally
 
+The default runtime uses PostgreSQL for identity, fleet, drivers and document metadata. Run migrations and
+provision a company explicitly before starting the API. See
+[Persistent identity and fleet](docs/PERSISTENCIA_IDENTIDADE_FROTA.md) for setup,
+available routes and local validation.
+
+For the original volatile demonstration with all modules:
+
 ```bash
-cd backend/api
-go mod tidy
-go run ./cmd/api
+./scripts/dev-api.sh
 ```
 
-Then check:
+This script selects `STORAGE_DRIVER=memory` unless a driver is explicitly set.
+Memory storage is rejected when `APP_ENV=production`. No frontend app has been
+implemented yet.
 
-```bash
-curl http://localhost:8080/health
-curl http://localhost:8080/api/v1/mission-control/summary \
-  -H "Authorization: Bearer $TOKEN"
-```
+## Delivery status
+
+- [Initial audit](docs/DIAGNOSTICO_ENTREGA.md)
+- [Delivery checklist](TASKS.md)
+- [AI continuation guide](docs/CONTINUIDADE.md)
+- [Drivers and document metadata](docs/MOTORISTAS_DOCUMENTOS.md)
+- [Identity and fleet persistence](docs/PERSISTENCIA_IDENTIDADE_FROTA.md)
 
 ## Architecture Rule
 
