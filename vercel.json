@@ -3,8 +3,16 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/((?!api/).*)",
-      "destination": "/apps/mission-control/$1"
+      "source": "/api/:match*",
+      "destination": "/api/index.go"
+    },
+    {
+      "source": "/src/:match*",
+      "destination": "/apps/mission-control/src/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/apps/mission-control/index.html"
     }
   ]
 }
