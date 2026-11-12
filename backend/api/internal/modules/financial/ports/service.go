@@ -34,3 +34,10 @@ type BudgetService interface {
 type AdjustmentService interface {
 	Search(context.Context, string, Query) (Page[domain.FinancialAdjustment], error)
 }
+type CashFlowService interface {
+	GetSummary(context.Context, string, string, string) (domain.CashFlowSummary, error)
+	ReconcileOperationalExpense(context.Context, string, string, domain.OperationalExpenseReconciliation) (domain.FinancialTransaction, error)
+	ListPendingInvoices(context.Context, string, Query) (Page[domain.FinancialTransaction], error)
+	CloseCash(context.Context, string, string, domain.CashClosing) (domain.CashClosing, error)
+	GetCashClosing(context.Context, string, string) (domain.CashClosing, error)
+}

@@ -6,7 +6,22 @@ import (
 )
 
 func PartFromRequest(req dto.PartRequest) domain.Part {
-	return domain.Part{SKU: req.SKU, InternalCode: req.InternalCode, Name: req.Name, Description: req.Description, CategoryID: req.CategoryID, BrandID: req.BrandID, ModelID: req.ModelID, UnitID: req.UnitID, Status: domain.StockStatus(req.Status), Metadata: req.Metadata}
+	return domain.Part{
+		SKU:          req.SKU,
+		InternalCode: req.InternalCode,
+		Name:         req.Name,
+		Description:  req.Description,
+		CategoryID:   req.CategoryID,
+		BrandID:      req.BrandID,
+		ModelID:      req.ModelID,
+		UnitID:       req.UnitID,
+		Status:       domain.StockStatus(req.Status),
+		UnitCost:     req.UnitCost,
+		MinStock:     req.MinStock,
+		CurrentStock: req.CurrentStock,
+		Location:     req.Location,
+		Metadata:     req.Metadata,
+	}
 }
 
 func CatalogFromRequest(req dto.CatalogRequest) domain.Catalog {

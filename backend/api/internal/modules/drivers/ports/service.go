@@ -16,3 +16,9 @@ type ManagementService interface {
 	Update(context.Context, domain.Driver) (domain.Driver, error)
 	Delete(context.Context, string, string, int64) error
 }
+
+type JourneyService interface {
+	RecordEvent(ctx context.Context, item domain.DriverJourneyRecord) (domain.DriverJourneyRecord, error)
+	ListJourney(ctx context.Context, tenantID, driverID string, limit int) ([]domain.DriverJourneyRecord, error)
+	GetSummary(ctx context.Context, tenantID, driverID string) (domain.JourneySummary, error)
+}

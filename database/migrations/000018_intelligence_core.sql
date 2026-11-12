@@ -147,7 +147,7 @@ create table if not exists intelligence_rule_definitions (
     rule_type text not null,
     rule_version integer not null,
     threshold numeric(18,4),
-    window text,
+    "window" text,
     active boolean not null default true,
     explanation text,
     created_at timestamptz not null default now(),

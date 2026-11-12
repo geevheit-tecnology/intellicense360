@@ -54,3 +54,7 @@ type IdempotencyRepository interface {
 type OperationalSignalProvider interface {
 	GetSignals(ctx context.Context, tenantID string) ([]domain.Signal, error)
 }
+
+type SignalScanner interface {
+	ScanOperationalSignals(ctx context.Context, tenantID string) ([]domain.CommandItem, error)
+}

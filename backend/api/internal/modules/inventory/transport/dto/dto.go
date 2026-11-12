@@ -10,6 +10,10 @@ type PartRequest struct {
 	ModelID      string            `json:"model_id"`
 	UnitID       string            `json:"unit_id"`
 	Status       string            `json:"status"`
+	UnitCost     float64           `json:"unit_cost"`
+	MinStock     float64           `json:"min_stock"`
+	CurrentStock float64           `json:"current_stock"`
+	Location     string            `json:"location"`
 	Metadata     map[string]string `json:"metadata"`
 }
 

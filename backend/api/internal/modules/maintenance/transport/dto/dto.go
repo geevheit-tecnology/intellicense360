@@ -9,8 +9,14 @@ type WorkOrderRequest struct {
 	Kind           string  `json:"kind"`
 	Status         string  `json:"status"`
 	Priority       string  `json:"priority"`
-	ServiceTypeID  string  `json:"service_type_id"`
-	EstimatedHours float64 `json:"estimated_hours"`
+	ServiceTypeID        string  `json:"service_type_id"`
+	EstimatedHours       float64 `json:"estimated_hours"`
+	InvoiceNumber        string  `json:"invoice_number,omitempty"`
+	InvoiceKey           string  `json:"invoice_key,omitempty"`
+	TotalCost            float64 `json:"total_cost,omitempty"`
+	PaymentStatus        string  `json:"payment_status,omitempty"`
+	IsThirdParty         bool    `json:"is_third_party"`
+	ThirdPartyIdentifier string  `json:"third_party_identifier,omitempty"`
 }
 
 type PreventivePlanRequest struct {

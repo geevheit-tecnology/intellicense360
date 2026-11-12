@@ -86,11 +86,33 @@ func Migrate(ctx context.Context, db *sql.DB, directory string) ([]string, error
 }
 
 var runtimeMigrations = map[string]bool{
-	"000001_init.sql":                              true,
-	"000002_identity_platform.sql":                 true,
-	"000003_fleet_core.sql":                        true,
-	"000020_identity_fleet_tenant_constraints.sql": true,
-	"000021_drivers_documents_core.sql":            true,
+	"000001_init.sql":                                    true,
+	"000002_identity_platform.sql":                       true,
+	"000003_fleet_core.sql":                              true,
+	"000005_checklist_core.sql":                          true,
+	"000006_tires_core.sql":                              true,
+	"000008_maintenance_core.sql":                       true,
+	"000009_maintenance_prompt_alignment.sql":           true,
+	"000010_inventory_core.sql":                         true,
+	"000012_tire_lifecycle_core.sql":                     true,
+	"000013_fuel_core.sql":                               true,
+	"000014_checklist_engine_core.sql":                  true,
+	"000015_financial_cost_core.sql":                    true,
+	"000017_event_bus_outbox.sql":                        true,
+	"000018_intelligence_core.sql":                      true,
+	"000019_mission_control_core.sql":                   true,
+	"000020_identity_fleet_tenant_constraints.sql":       true,
+	"000021_drivers_documents_core.sql":                  true,
+	"000022_odometer_km_history.sql":                     true,
+	"000023_fuel_operational_financial_alignment.sql":   true,
+	"000024_tires_lifecycle_alignment.sql":              true,
+	"000025_maintenance_operational_alignment.sql":       true,
+	"000026_checklist_operational_alignment.sql":         true,
+	"000027_mission_control_alignment.sql":               true,
+	"000028_financial_cashflow_reconciliation.sql":       true,
+	"000029_inventory_operational_alignment.sql":        true,
+	"000030_trips_dispatch_core.sql":                    true,
+	"000031_driver_journey_compliance.sql":              true,
 }
 
 // CheckMigrations is read-only; startup never performs DDL or seeds users.

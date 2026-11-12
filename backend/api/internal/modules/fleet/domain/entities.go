@@ -133,3 +133,26 @@ type Asset struct {
 	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
 	Version     int64      `json:"version"`
 }
+
+type OdometerReading struct {
+	ID               string    `json:"id"`
+	TenantID         string    `json:"tenant_id"`
+	VehicleID        string    `json:"vehicle_id"`
+	Reading          int64     `json:"reading"`
+	ReadAt           time.Time `json:"read_at"`
+	Source           string    `json:"source"`
+	DriverID         *string   `json:"driver_id,omitempty"`
+	ActorID          string    `json:"actor_id"`
+	Notes            string    `json:"notes,omitempty"`
+	IsCorrection     bool      `json:"is_correction"`
+	CorrectionReason string    `json:"correction_reason,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+type VehicleOdometerSummary struct {
+	VehicleID     string     `json:"vehicle_id"`
+	CurrentKM     int64      `json:"current_km"`
+	LastReadAt    *time.Time `json:"last_read_at,omitempty"`
+	LastReadingID *string    `json:"last_reading_id,omitempty"`
+	TotalReadings int64      `json:"total_readings"`
+}

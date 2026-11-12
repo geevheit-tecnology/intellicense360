@@ -25,8 +25,14 @@ func TransactionFromRequest(req dto.FuelTransactionRequest) domain.FuelTransacti
 		DriverReference:   req.DriverReference,
 		VehicleReference:  req.VehicleReference,
 		AssetReference:    req.AssetReference,
-		PaymentMethod:     req.PaymentMethod,
-		Notes:             req.Notes,
+		PaymentMethod:        req.PaymentMethod,
+		RequisitionNumber:    req.RequisitionNumber,
+		IsThirdParty:         req.IsThirdParty,
+		ThirdPartyIdentifier: req.ThirdPartyIdentifier,
+		InvoiceNumber:        req.InvoiceNumber,
+		InvoiceKey:           req.InvoiceKey,
+		PaymentStatus:        req.PaymentStatus,
+		Notes:                req.Notes,
 		Status:            domain.FuelTransactionStatus(req.Status),
 	}
 }

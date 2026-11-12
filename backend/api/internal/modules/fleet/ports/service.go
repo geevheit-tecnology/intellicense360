@@ -49,3 +49,10 @@ type AssetService interface {
 	Update(ctx context.Context, asset domain.Asset) (domain.Asset, error)
 	Delete(ctx context.Context, tenantID string, id string) error
 }
+
+type OdometerService interface {
+	RecordReading(ctx context.Context, reading domain.OdometerReading) (domain.OdometerReading, error)
+	GetLatest(ctx context.Context, tenantID string, vehicleID string) (*domain.OdometerReading, error)
+	GetSummary(ctx context.Context, tenantID string, vehicleID string) (domain.VehicleOdometerSummary, error)
+	ListHistory(ctx context.Context, tenantID string, vehicleID string, query Query) (Page[domain.OdometerReading], error)
+}

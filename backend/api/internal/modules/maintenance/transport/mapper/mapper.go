@@ -6,7 +6,24 @@ import (
 )
 
 func WorkOrderFromRequest(req dto.WorkOrderRequest) domain.WorkOrder {
-	return domain.WorkOrder{Code: req.Code, AssetID: req.AssetID, VehicleID: req.VehicleID, Title: req.Title, Description: req.Description, Kind: domain.MaintenanceKind(req.Kind), Status: domain.WorkOrderStatus(req.Status), Priority: domain.WorkOrderPriority(req.Priority), ServiceTypeID: req.ServiceTypeID, EstimatedHours: req.EstimatedHours}
+	return domain.WorkOrder{
+		Code:                 req.Code,
+		AssetID:              req.AssetID,
+		VehicleID:            req.VehicleID,
+		Title:                req.Title,
+		Description:          req.Description,
+		Kind:                 domain.MaintenanceKind(req.Kind),
+		Status:               domain.WorkOrderStatus(req.Status),
+		Priority:             domain.WorkOrderPriority(req.Priority),
+		ServiceTypeID:        req.ServiceTypeID,
+		EstimatedHours:       req.EstimatedHours,
+		InvoiceNumber:        req.InvoiceNumber,
+		InvoiceKey:           req.InvoiceKey,
+		TotalCost:            req.TotalCost,
+		PaymentStatus:        req.PaymentStatus,
+		IsThirdParty:         req.IsThirdParty,
+		ThirdPartyIdentifier: req.ThirdPartyIdentifier,
+	}
 }
 
 func PreventivePlanFromRequest(req dto.PreventivePlanRequest) domain.PreventivePlan {

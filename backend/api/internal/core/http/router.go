@@ -1,10 +1,10 @@
 package http
 
 import (
-	documentshttp "github.com/geevheit/intelligence360/backend/api/internal/modules/documents/transport/http"
-	drivershttp "github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/transport/http"
 	stdhttp "net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/geevheit/intelligence360/backend/api/internal/core/config"
 	"github.com/geevheit/intelligence360/backend/api/internal/core/logger"
@@ -12,6 +12,8 @@ import (
 	assetshttp "github.com/geevheit/intelligence360/backend/api/internal/modules/assets/transport/http"
 	checklisthttp "github.com/geevheit/intelligence360/backend/api/internal/modules/checklist/transport/http"
 	ciothttp "github.com/geevheit/intelligence360/backend/api/internal/modules/ciot/transport/http"
+	documentshttp "github.com/geevheit/intelligence360/backend/api/internal/modules/documents/transport/http"
+	drivershttp "github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/transport/http"
 	financialhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/financial/transport/http"
 	fleethttp "github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/transport/http"
 	fuelhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/fuel/transport/http"
@@ -23,7 +25,7 @@ import (
 	missionhttp "github.com/geevheit/intelligence360/backend/api/internal/modules/missioncontrol/transport/http"
 	suppliershttp "github.com/geevheit/intelligence360/backend/api/internal/modules/suppliers/transport/http"
 	tireshttp "github.com/geevheit/intelligence360/backend/api/internal/modules/tires/transport/http"
-	"github.com/gin-gonic/gin"
+	tripshttp "github.com/geevheit/intelligence360/backend/api/internal/modules/trips/transport/http"
 )
 
 type RouterDependencies struct {
@@ -45,6 +47,7 @@ type RouterDependencies struct {
 	TiresHandler          tireshttp.Handler
 	IntelligenceHandler   intelligencehttp.Handler
 	MissionControlHandler missionhttp.Handler
+	TripsHandler          *tripshttp.Handler
 }
 
 func NewRouter(deps RouterDependencies) *gin.Engine {
@@ -57,10 +60,22 @@ func NewRouter(deps RouterDependencies) *gin.Engine {
 
 	router.Use(
 		gin.Recovery(),
+		middleware.CORS(),
 		middleware.RequestLogger(deps.Logger),
 		middleware.ErrorHandler(deps.Logger),
 		middleware.Audit(deps.Logger),
 	)
+
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(stdhttp.StatusOK, gin.H{
+			"status":    "running",
+			"service":   deps.Config.AppName,
+			"message":   "Geevheit Intelligence 360 API está online e pronta para receber requisições!",
+			"dashboard": "http://localhost:3000",
+			"health":    "/health",
+			"timestamp": time.Now().UTC().Format(time.RFC3339),
+		})
+	})
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(stdhttp.StatusOK, gin.H{
@@ -84,20 +99,23 @@ func NewRouter(deps RouterDependencies) *gin.Engine {
 		if deps.DocumentsHandler != nil {
 			deps.DocumentsHandler.RegisterRoutes(protected)
 		}
+		deps.FuelHandler.RegisterRoutes(protected)
+		deps.TiresHandler.RegisterRoutes(protected)
+		deps.MaintenanceHandler.RegisterRoutes(protected)
+		deps.ChecklistHandler.RegisterRoutes(protected)
+		deps.MissionControlHandler.RegisterRoutes(protected)
+		deps.FinancialHandler.RegisterRoutes(protected)
+		deps.InventoryHandler.RegisterRoutes(protected)
+		if deps.TripsHandler != nil {
+			deps.TripsHandler.RegisterRoutes(protected)
+		}
 		// Only modules with durable adapters are exposed in PostgreSQL mode.
 		if deps.Config.StorageDriver == "postgres" {
 			return router
 		}
 		deps.AssetsHandler.RegisterRoutes(protected)
-		deps.ChecklistHandler.RegisterRoutes(protected)
-		deps.FuelHandler.RegisterRoutes(protected)
-		deps.FinancialHandler.RegisterRoutes(protected)
 		deps.CIOTHandler.RegisterRoutes(protected)
-		deps.InventoryHandler.RegisterRoutes(protected)
-		deps.MaintenanceHandler.RegisterRoutes(protected)
 		deps.SuppliersHandler.RegisterRoutes(protected)
-		deps.TiresHandler.RegisterRoutes(protected)
-		deps.MissionControlHandler.RegisterRoutes(protected)
 		deps.IntelligenceHandler.RegisterRoutes(protected)
 	}
 

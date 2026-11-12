@@ -852,6 +852,80 @@ paths:
       responses:
         "204":
           description: Vehicle deleted
+  /api/v1/fleet/vehicles/{id}/odometer:
+    get:
+      summary: Get latest odometer reading and summary for vehicle
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Odometer summary
+        "404":
+          description: Vehicle not found
+    post:
+      summary: Record odometer reading for vehicle
+      description: Appends an immutable odometer reading. Reading must be >= previous reading unless is_correction is true with a valid explanation.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reading]
+              properties:
+                reading:
+                  type: integer
+                  minimum: 0
+                source:
+                  type: string
+                  enum: [manual, fueling, maintenance, checklist, telemetry, correction]
+                read_at:
+                  type: string
+                  format: date-time
+                driver_id:
+                  type: string
+                  format: uuid
+                notes:
+                  type: string
+                is_correction:
+                  type: boolean
+                correction_reason:
+                  type: string
+      responses:
+        "201":
+          description: Odometer reading recorded
+        "400":
+          description: Odometer regression or missing correction explanation
+        "404":
+          description: Vehicle not found
+  /api/v1/fleet/vehicles/{id}/odometer/history:
+    get:
+      summary: List odometer readings history for vehicle
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paged list of odometer readings
+        "404":
+          description: Vehicle not found
   /api/v1/fleet/brands:
     get:
       summary: Search vehicle brands
@@ -927,6 +1001,204 @@ paths:
       responses:
         "201":
           description: Asset created
+  /api/v1/fuel/transactions:
+    get:
+      summary: Search fuel transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Fuel transaction page
+    post:
+      summary: Create fuel transaction
+      description: Record fueling transaction for company vehicles or third-party aggregates, with requisition number and invoice reconciliation data.
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel transaction created
+  /api/v1/fuel/transactions/{id}:
+    get:
+      summary: Get fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Fuel transaction
+    put:
+      summary: Update draft fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Fuel transaction updated
+    delete:
+      summary: Soft delete draft fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "204":
+          description: Fuel transaction deleted
+  /api/v1/fuel/transactions/{id}/complete:
+    post:
+      summary: Complete fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Fuel transaction completed
+  /api/v1/fuel/transactions/{id}/cancel:
+    post:
+      summary: Cancel fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Fuel transaction canceled
+  /api/v1/fuel/transactions/{id}/adjust:
+    post:
+      summary: Adjust completed fuel transaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "201":
+          description: Fuel adjustment created
+  /api/v1/fuel/types:
+    get:
+      summary: Search fuel types
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel type page
+    post:
+      summary: Create fuel type
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel type created
+  /api/v1/fuel/stations:
+    get:
+      summary: Search fuel stations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel station page
+    post:
+      summary: Create fuel station
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel station created
+  /api/v1/fuel/tanks:
+    get:
+      summary: Search fuel tanks
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel tank page
+    post:
+      summary: Create fuel tank
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel tank created
+  /api/v1/fuel/nozzles:
+    get:
+      summary: Search fuel nozzles
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel nozzle page
+    post:
+      summary: Create fuel nozzle
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel nozzle created
+  /api/v1/fuel/readings:
+    get:
+      summary: Search fuel readings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel reading page
+    post:
+      summary: Record fuel reading
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel reading recorded
+  /api/v1/fuel/prices:
+    get:
+      summary: Search fuel prices
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel price page
+    post:
+      summary: Record fuel price
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel price recorded
+  /api/v1/fuel/receipts:
+    get:
+      summary: Search fuel receipts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel receipt page
+    post:
+      summary: Create fuel receipt
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel receipt created
+  /api/v1/fuel/adjustments:
+    get:
+      summary: Search fuel adjustments
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fuel adjustment page
+    post:
+      summary: Adjust completed fuel transaction
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Fuel adjustment created
   /api/v1/mission-control/summary:
     get:
       summary: Mission Control operational summary
@@ -1070,6 +1342,145 @@ paths:
       responses:
         "201":
           description: Recommendation actions created
+  /api/v1/mission-control/evaluate-signals:
+    post:
+      summary: Scan and evaluate autonomous proactive operational alerts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Operational signals evaluated and ingested
+  /api/v1/financial/cash-flow/summary:
+    get:
+      summary: Get cash flow summary and fleet expenses
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Cash flow summary
+  /api/v1/financial/reconcile/operational:
+    post:
+      summary: Reconcile operational expense (fuel or maintenance) into financial accounts payable
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OperationalExpenseReconciliation"
+      responses:
+        "201":
+          description: Operational expense reconciled into accounts payable
+  /api/v1/financial/pending-invoices:
+    get:
+      summary: List pending invoices and payables from fleet and third-parties
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Pending invoices page
+  /api/v1/financial/cash-closing:
+    post:
+      summary: Perform daily cash closing
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Daily cash closing recorded
+  /api/v1/financial/cash-closing/{date}:
+    get:
+      summary: Get daily cash closing by date
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Daily cash closing record
+  /api/v1/trips:
+    get:
+      summary: Search cargo dispatch trips
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Trips list
+    post:
+      summary: Create new trip or cargo dispatch
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Trip created
+  /api/v1/trips/summary:
+    get:
+      summary: Get aggregated trips metrics and freight revenue
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Trips operational summary
+  /api/v1/trips/{id}:
+    get:
+      summary: Get trip by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Trip details
+  /api/v1/trips/{id}/dispatch:
+    post:
+      summary: Dispatch trip and record departure odometer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Trip dispatched
+  /api/v1/trips/{id}/deliver:
+    post:
+      summary: Conclude delivery and register proof of delivery receipt
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Delivery concluded
+  /api/v1/trips/{id}/cancel:
+    post:
+      summary: Cancel trip with reason
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      responses:
+        "200":
+          description: Trip canceled
   "/api/v1/drivers":
     get:
       summary: "List drivers"
@@ -1414,6 +1825,131 @@ paths:
                 "$ref": "#/components/schemas/OperationalError"
         "500":
           description: "Internal error; no SQL or connection details disclosed"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+  "/api/v1/drivers/{id}/journey":
+    get:
+      summary: "List driver journey records (Lei 13.103/2015)"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "drivers.read"
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+        -
+          name: "limit"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 50
+      responses:
+        "200":
+          description: "List of driver journey event records"
+          content:
+            "application/json":
+              schema:
+                type: "array"
+                items:
+                  "$ref": "#/components/schemas/DriverJourneyRecord"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+    post:
+      summary: "Record driver journey event (Lei 13.103/2015)"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "drivers.manage"
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/DriverJourneyRecordWrite"
+      responses:
+        "201":
+          description: "Driver journey record created"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DriverJourneyRecord"
+        "400":
+          description: "Invalid input"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+  "/api/v1/drivers/{id}/journey/summary":
+    get:
+      summary: "Get driver journey summary and compliance statistics"
+      security:
+        -
+          bearerAuth: []
+      x-permissions:
+        - "drivers.read"
+      parameters:
+        -
+          name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Driver journey compliance summary"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/JourneySummary"
+        "401":
+          description: "Missing or invalid session"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/OperationalError"
+        "500":
+          description: "Internal error"
           content:
             "application/json":
               schema:
@@ -2230,6 +2766,54 @@ components:
           type: string
         photo_url:
           type: string
+    ChecklistExecution:
+      type: object
+      required: [template_version_id]
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        template_version_id:
+          type: string
+        vehicle_id:
+          type: string
+        status:
+          type: string
+          enum: [draft, in_progress, completed, canceled, invalidated]
+        performed_by:
+          type: string
+        location_reference:
+          type: string
+        notes:
+          type: string
+        score:
+          type: number
+        final_result:
+          type: string
+    ChecklistNonConformity:
+      type: object
+      required: [execution_id, title, severity]
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        execution_id:
+          type: string
+        response_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [info, low, medium, high, critical]
+        status:
+          type: string
+        recommendation:
+          type: string
     Tire:
       type: object
       required: [serial_number, fire_number, dot]
@@ -2285,4 +2869,187 @@ components:
         priority:
           type: string
         service_type_id:
+          type: string
+        estimated_hours:
+          type: number
+        actual_hours:
+          type: number
+        invoice_number:
+          type: string
+        invoice_key:
+          type: string
+        total_cost:
+          type: number
+        payment_status:
+          type: string
+          enum: [pending, approved, paid, canceled]
+        is_third_party:
+          type: boolean
+        third_party_identifier:
+          type: string
+    OperationalExpenseReconciliation:
+      type: object
+      required: [source_type, source_id, amount]
+      properties:
+        source_type:
+          type: string
+          enum: [fuel, maintenance]
+        source_id:
+          type: string
+        vehicle_id:
+          type: string
+        driver_id:
+          type: string
+        invoice_number:
+          type: string
+        invoice_key:
+          type: string
+        requisition_number:
+          type: string
+        is_third_party:
+          type: boolean
+        third_party_identifier:
+          type: string
+        amount:
+          type: number
+        due_date:
+          type: string
+          format: date
+        payment_method:
+          type: string
+        barcode:
+          type: string
+        description:
+          type: string
+        notes:
+          type: string
+    CashFlowSummary:
+      type: object
+      properties:
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        total_revenues:
+          type: number
+        total_expenses:
+          type: number
+        total_fleet_expenses:
+          type: number
+        total_third_party_expenses:
+          type: number
+        net_cash_flow:
+          type: number
+        pending_payables:
+          type: number
+        overdue_payables:
+          type: number
+        pending_invoices_count:
+          type: integer
+    CashClosing:
+      type: object
+      properties:
+        id:
+          type: string
+        closing_date:
+          type: string
+          format: date
+        opening_balance:
+          type: number
+        total_revenues:
+          type: number
+        total_fleet_expenses:
+          type: number
+        total_third_party_expenses:
+          type: number
+        total_other_expenses:
+          type: number
+        closing_balance:
+          type: number
+        status:
+          type: string
+        notes:
+          type: string
+    DriverJourneyRecordWrite:
+      type: object
+      required:
+        - event_type
+      properties:
+        event_type:
+          type: string
+          enum: [driving, break_rest, meal, daily_rest, waiting, standby]
+        location:
+          type: string
+        odometer_km:
+          type: integer
+        notes:
+          type: string
+        vehicle_id:
+          type: string
+        trip_id:
+          type: string
+        daily_allowance_amount:
+          type: number
+    DriverJourneyRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        driver_id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+        trip_id:
+          type: string
+        event_type:
+          type: string
+          enum: [driving, break_rest, meal, daily_rest, waiting, standby]
+        start_at:
+          type: string
+          format: date-time
+        end_at:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+        location:
+          type: string
+        odometer_km:
+          type: integer
+        is_violation:
+          type: boolean
+        violation_reason:
+          type: string
+        daily_allowance_amount:
+          type: number
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+    JourneySummary:
+      type: object
+      properties:
+        total_driving_minutes:
+          type: integer
+        total_rest_minutes:
+          type: integer
+        total_waiting_minutes:
+          type: integer
+        violations_count:
+          type: integer
+        total_allowance_amount:
+          type: number
+        active_event:
           type: string

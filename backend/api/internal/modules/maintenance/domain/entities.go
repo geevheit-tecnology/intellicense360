@@ -66,9 +66,15 @@ type WorkOrder struct {
 	StartedAt      *time.Time        `json:"started_at,omitempty"`
 	CompletedAt    *time.Time        `json:"completed_at,omitempty"`
 	CancelledAt    *time.Time        `json:"cancelled_at,omitempty"`
-	EstimatedHours float64           `json:"estimated_hours,omitempty"`
-	ActualHours    float64           `json:"actual_hours,omitempty"`
-	CreatedBy      string            `json:"created_by,omitempty"`
+	EstimatedHours       float64           `json:"estimated_hours,omitempty"`
+	ActualHours          float64           `json:"actual_hours,omitempty"`
+	InvoiceNumber        string            `json:"invoice_number,omitempty"`
+	InvoiceKey           string            `json:"invoice_key,omitempty"`
+	TotalCost            float64           `json:"total_cost,omitempty"`
+	PaymentStatus        string            `json:"payment_status,omitempty"`
+	IsThirdParty         bool              `json:"is_third_party"`
+	ThirdPartyIdentifier string            `json:"third_party_identifier,omitempty"`
+	CreatedBy            string            `json:"created_by,omitempty"`
 	UpdatedBy      string            `json:"updated_by,omitempty"`
 	Metadata       map[string]string `json:"metadata,omitempty"`
 	CreatedAt      time.Time         `json:"created_at"`

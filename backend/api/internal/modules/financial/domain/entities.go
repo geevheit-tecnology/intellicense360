@@ -50,6 +50,19 @@ type FinancialTransaction struct {
 	OperationReference  string          `json:"operation_reference,omitempty"`
 	DocumentNumber      string          `json:"document_number,omitempty"`
 	PaymentMethodID     string          `json:"payment_method_id,omitempty"`
+	VehicleID           string          `json:"vehicle_id,omitempty"`
+	DriverID            string          `json:"driver_id,omitempty"`
+	FuelTransactionID   string          `json:"fuel_transaction_id,omitempty"`
+	WorkOrderID         string          `json:"work_order_id,omitempty"`
+	InvoiceKey          string          `json:"invoice_key,omitempty"`
+	InvoiceNumber       string          `json:"invoice_number,omitempty"`
+	RequisitionNumber   string          `json:"requisition_number,omitempty"`
+	IsThirdParty        bool            `json:"is_third_party"`
+	ThirdPartyIdentifier string         `json:"third_party_identifier,omitempty"`
+	PaymentMethod       string          `json:"payment_method,omitempty"`
+	Barcode             string          `json:"barcode,omitempty"`
+	BankAccount         string          `json:"bank_account,omitempty"`
+	CashFlowNature      string          `json:"cash_flow_nature,omitempty"`
 	Status              FinancialStatus `json:"status"`
 	Notes               string          `json:"notes,omitempty"`
 	AttachmentReference string          `json:"attachment_reference,omitempty"`
@@ -202,4 +215,56 @@ type FinancialAdjustment struct {
 	CreatedBy      string    `json:"created_by,omitempty"`
 	AdjustedAmount float64   `json:"adjusted_amount"`
 	CreatedAt      time.Time `json:"created_at"`
+}
+
+type CashFlowSummary struct {
+	StartDate               time.Time `json:"start_date"`
+	EndDate                 time.Time `json:"end_date"`
+	TotalRevenues           float64   `json:"total_revenues"`
+	TotalExpenses           float64   `json:"total_expenses"`
+	TotalFleetExpenses      float64   `json:"total_fleet_expenses"`
+	TotalThirdPartyExpenses float64   `json:"total_third_party_expenses"`
+	NetCashFlow             float64   `json:"net_cash_flow"`
+	PendingPayables         float64   `json:"pending_payables"`
+	OverduePayables         float64   `json:"overdue_payables"`
+	PendingInvoicesCount    int       `json:"pending_invoices_count"`
+}
+
+type CashClosing struct {
+	ID                      string     `json:"id"`
+	TenantID                string     `json:"tenant_id"`
+	ClosingDate             time.Time  `json:"closing_date"`
+	OpeningBalance          float64    `json:"opening_balance"`
+	TotalRevenues           float64    `json:"total_revenues"`
+	TotalFleetExpenses      float64    `json:"total_fleet_expenses"`
+	TotalThirdPartyExpenses float64    `json:"total_third_party_expenses"`
+	TotalOtherExpenses      float64    `json:"total_other_expenses"`
+	ClosingBalance          float64    `json:"closing_balance"`
+	Status                  string     `json:"status"`
+	Notes                   string     `json:"notes,omitempty"`
+	ClosedBy                string     `json:"closed_by,omitempty"`
+	ClosedAt                *time.Time `json:"closed_at,omitempty"`
+	CreatedAt               time.Time  `json:"created_at"`
+	UpdatedAt               time.Time  `json:"updated_at"`
+	DeletedAt               *time.Time `json:"deleted_at,omitempty"`
+	Version                 int64      `json:"version"`
+}
+
+type OperationalExpenseReconciliation struct {
+	SourceType           string     `json:"source_type"` // "fuel" or "maintenance"
+	SourceID             string     `json:"source_id"`
+	VehicleID            string     `json:"vehicle_id,omitempty"`
+	DriverID             string     `json:"driver_id,omitempty"`
+	InvoiceNumber        string     `json:"invoice_number,omitempty"`
+	InvoiceKey           string     `json:"invoice_key,omitempty"`
+	RequisitionNumber    string     `json:"requisition_number,omitempty"`
+	IsThirdParty         bool       `json:"is_third_party"`
+	ThirdPartyIdentifier string     `json:"third_party_identifier,omitempty"`
+	Amount               float64    `json:"amount"`
+	Date                 time.Time  `json:"date"`
+	DueDate              *time.Time `json:"due_date,omitempty"`
+	PaymentMethod        string     `json:"payment_method,omitempty"`
+	Barcode              string     `json:"barcode,omitempty"`
+	Description          string     `json:"description"`
+	Notes                string     `json:"notes,omitempty"`
 }

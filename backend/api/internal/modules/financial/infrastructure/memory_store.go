@@ -23,10 +23,22 @@ type MemoryStore struct {
 	periods      map[string]domain.FinancialPeriod
 	budgets      map[string]domain.Budget
 	adjustments  map[string]domain.FinancialAdjustment
+	closings     map[string]domain.CashClosing
 }
 
 func NewMemoryStore() *MemoryStore {
-	return &MemoryStore{transactions: map[string]domain.FinancialTransaction{}, categories: map[string]domain.CostCategory{}, types: map[string]domain.CostType{}, centers: map[string]domain.CostCenter{}, accounts: map[string]domain.Account{}, methods: map[string]domain.PaymentMethod{}, periods: map[string]domain.FinancialPeriod{}, budgets: map[string]domain.Budget{}, adjustments: map[string]domain.FinancialAdjustment{}}
+	return &MemoryStore{
+		transactions: map[string]domain.FinancialTransaction{},
+		categories:   map[string]domain.CostCategory{},
+		types:        map[string]domain.CostType{},
+		centers:      map[string]domain.CostCenter{},
+		accounts:     map[string]domain.Account{},
+		methods:      map[string]domain.PaymentMethod{},
+		periods:      map[string]domain.FinancialPeriod{},
+		budgets:      map[string]domain.Budget{},
+		adjustments:  map[string]domain.FinancialAdjustment{},
+		closings:     map[string]domain.CashClosing{},
+	}
 }
 func (s *MemoryStore) Transactions() TransactionRepository { return TransactionRepository{s: s} }
 func (s *MemoryStore) Categories() CategoryRepository      { return CategoryRepository{s: s} }
@@ -37,6 +49,7 @@ func (s *MemoryStore) Methods() MethodRepository           { return MethodReposi
 func (s *MemoryStore) Periods() PeriodRepository           { return PeriodRepository{s: s} }
 func (s *MemoryStore) Budgets() BudgetRepository           { return BudgetRepository{s: s} }
 func (s *MemoryStore) Adjustments() AdjustmentRepository   { return AdjustmentRepository{s: s} }
+func (s *MemoryStore) Closings() CashClosingRepository     { return CashClosingRepository{s: s} }
 
 type TransactionRepository struct{ s *MemoryStore }
 
@@ -93,6 +106,37 @@ func (r TransactionRepository) Delete(_ context.Context, tenantID, id string) er
 	item.Version++
 	r.s.transactions[k] = item
 	return nil
+}
+func (r TransactionRepository) GetCashFlowSummary(_ context.Context, tenantID, startDate, endDate string) (domain.CashFlowSummary, error) {
+	r.s.mu.RLock()
+	defer r.s.mu.RUnlock()
+	summary := domain.CashFlowSummary{}
+	now := time.Now().UTC()
+	for _, item := range r.s.transactions {
+		if item.TenantID != tenantID || item.DeletedAt != nil {
+			continue
+		}
+		if item.Kind == domain.KindRevenue && item.Status == domain.StatusReceived {
+			summary.TotalRevenues += item.Amount
+		} else if item.Kind == domain.KindExpense {
+			if item.Status == domain.StatusPaid {
+				summary.TotalExpenses += item.Amount
+				if item.IsThirdParty {
+					summary.TotalThirdPartyExpenses += item.Amount
+				} else {
+					summary.TotalFleetExpenses += item.Amount
+				}
+			} else if item.Status == domain.StatusPending || item.Status == domain.StatusApproved {
+				summary.PendingPayables += item.Amount
+				summary.PendingInvoicesCount++
+				if item.DueDate != nil && item.DueDate.Before(now) {
+					summary.OverduePayables += item.Amount
+				}
+			}
+		}
+	}
+	summary.NetCashFlow = summary.TotalRevenues - summary.TotalExpenses
+	return summary, nil
 }
 
 type CategoryRepository struct{ s *MemoryStore }
@@ -317,4 +361,36 @@ func page[T any](items []T, q ports.Query) ports.Page[T] {
 		pages = (total + q.PageSize - 1) / q.PageSize
 	}
 	return ports.Page[T]{Items: items[start:end], Page: q.Page, PageSize: q.PageSize, TotalItems: total, TotalPages: pages}
+}
+
+type CashClosingRepository struct{ s *MemoryStore }
+
+func (r CashClosingRepository) Create(_ context.Context, item domain.CashClosing) (domain.CashClosing, error) {
+	r.s.mu.Lock()
+	defer r.s.mu.Unlock()
+	r.s.closings[key(item.TenantID, item.ClosingDate.Format("2006-01-02"))] = item
+	return item, nil
+}
+
+func (r CashClosingRepository) FindByDate(_ context.Context, tenantID, dateStr string) (domain.CashClosing, error) {
+	r.s.mu.RLock()
+	defer r.s.mu.RUnlock()
+	item, ok := r.s.closings[key(tenantID, dateStr)]
+	if !ok || item.DeletedAt != nil {
+		return domain.CashClosing{}, application.ErrNotFound
+	}
+	return item, nil
+}
+
+func (r CashClosingRepository) Search(_ context.Context, tenantID string, q ports.Query) (ports.Page[domain.CashClosing], error) {
+	r.s.mu.RLock()
+	defer r.s.mu.RUnlock()
+	items := []domain.CashClosing{}
+	for _, item := range r.s.closings {
+		if item.TenantID == tenantID && item.DeletedAt == nil {
+			items = append(items, item)
+		}
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].ClosingDate.After(items[j].ClosingDate) })
+	return page(items, q), nil
 }

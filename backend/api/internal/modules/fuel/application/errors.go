@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrNotFound             = errors.New("fuel record not found")
+	ErrConflict             = errors.New("fuel resource conflict")
 	ErrInvalidFuelData      = errors.New("invalid fuel data")
 	ErrInvalidFuelKind      = errors.New("invalid fuel type")
 	ErrInvalidStatus        = errors.New("invalid fuel transaction status")

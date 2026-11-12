@@ -2,6 +2,8 @@ package ports
 
 import (
 	"context"
+	"time"
+
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/domain"
 )
 
@@ -50,4 +52,13 @@ type VehicleAccessFunc func(context.Context, string, string) error
 
 func (f VehicleAccessFunc) ValidateVehicleAccess(ctx context.Context, tenant, id string) error {
 	return f(ctx, tenant, id)
+}
+
+type JourneyRepository interface {
+	Create(ctx context.Context, item domain.DriverJourneyRecord) (domain.DriverJourneyRecord, error)
+	FindByID(ctx context.Context, tenantID, id string) (domain.DriverJourneyRecord, error)
+	ListByDriver(ctx context.Context, tenantID, driverID string, limit int) ([]domain.DriverJourneyRecord, error)
+	GetLastActiveRecord(ctx context.Context, tenantID, driverID string) (*domain.DriverJourneyRecord, error)
+	CloseActiveRecord(ctx context.Context, tenantID, id string, endAt time.Time, durationMinutes int, isViolation bool, violationReason string) error
+	GetSummary(ctx context.Context, tenantID, driverID string) (domain.JourneySummary, error)
 }

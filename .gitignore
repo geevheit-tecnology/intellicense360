@@ -1,0 +1,28 @@
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Secrets & local env files (preserve examples)
+.env
+.env.local
+.env.production
+!.env.production.example
+
+# Go build artifacts
+*.o
+*.a
+*.so
+bin/
+backend/api/bin/
+backend/api/api
+backend/api/migrate
+backend/api/provision
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Database & backup temporary files
+*.sql.gz
+*.dump
+/backups/

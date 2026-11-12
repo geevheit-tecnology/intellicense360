@@ -281,3 +281,133 @@ func newID(prefix string) string {
 	}
 	return prefix + "_" + hex.EncodeToString(b[:])
 }
+
+type CashFlowService struct {
+	tx       ports.TransactionRepository
+	closings ports.CashClosingRepository
+}
+
+func NewCashFlowService(tx ports.TransactionRepository, closings ports.CashClosingRepository) CashFlowService {
+	return CashFlowService{tx: tx, closings: closings}
+}
+
+func (s CashFlowService) GetSummary(ctx context.Context, tenantID, startDate, endDate string) (domain.CashFlowSummary, error) {
+	if strings.TrimSpace(tenantID) == "" {
+		return domain.CashFlowSummary{}, ErrUnauthorizedTenant
+	}
+	return s.tx.GetCashFlowSummary(ctx, tenantID, startDate, endDate)
+}
+
+func (s CashFlowService) ReconcileOperationalExpense(ctx context.Context, tenantID, actorID string, req domain.OperationalExpenseReconciliation) (domain.FinancialTransaction, error) {
+	if strings.TrimSpace(tenantID) == "" {
+		return domain.FinancialTransaction{}, ErrUnauthorizedTenant
+	}
+	if req.Amount <= 0 {
+		return domain.FinancialTransaction{}, ErrInvalidFinancialData
+	}
+	now := time.Now().UTC()
+	txDate := req.Date
+	if txDate.IsZero() {
+		txDate = now
+	}
+	description := strings.TrimSpace(req.Description)
+	if description == "" {
+		if req.SourceType == "fuel" {
+			description = "Abastecimento - Requisição: " + req.RequisitionNumber
+		} else {
+			description = "Manutenção - O.S: " + req.SourceID
+		}
+	}
+	if req.IsThirdParty && req.ThirdPartyIdentifier != "" {
+		description += " (Terceiro: " + req.ThirdPartyIdentifier + ")"
+	}
+
+	tx := domain.FinancialTransaction{
+		ID:                   newID("fin"),
+		TenantID:             tenantID,
+		Kind:                 domain.KindExpense,
+		Description:          description,
+		Amount:               req.Amount,
+		Date:                 txDate,
+		DueDate:              req.DueDate,
+		VehicleID:            req.VehicleID,
+		DriverID:             req.DriverID,
+		InvoiceNumber:        req.InvoiceNumber,
+		InvoiceKey:           req.InvoiceKey,
+		RequisitionNumber:    req.RequisitionNumber,
+		IsThirdParty:         req.IsThirdParty,
+		ThirdPartyIdentifier: req.ThirdPartyIdentifier,
+		PaymentMethod:        req.PaymentMethod,
+		Barcode:              req.Barcode,
+		CashFlowNature:       "operational",
+		Status:               domain.StatusPending,
+		Notes:                req.Notes,
+		CreatedBy:            actorID,
+		UpdatedBy:            actorID,
+		CreatedAt:            now,
+		UpdatedAt:            now,
+		Version:              1,
+	}
+
+	if req.SourceType == "fuel" {
+		tx.FuelTransactionID = req.SourceID
+		tx.OperationReference = "fuel:" + req.SourceID
+	} else if req.SourceType == "maintenance" {
+		tx.WorkOrderID = req.SourceID
+		tx.OperationReference = "maintenance:" + req.SourceID
+	}
+
+	return s.tx.Create(ctx, tx)
+}
+
+func (s CashFlowService) ListPendingInvoices(ctx context.Context, tenantID string, q ports.Query) (ports.Page[domain.FinancialTransaction], error) {
+	if strings.TrimSpace(tenantID) == "" {
+		return ports.Page[domain.FinancialTransaction]{}, ErrUnauthorizedTenant
+	}
+	if q.Filters == nil {
+		q.Filters = map[string]string{}
+	}
+	q.Filters["kind"] = string(domain.KindExpense)
+	q.Filters["status"] = string(domain.StatusPending)
+	return s.tx.Search(ctx, tenantID, q)
+}
+
+func (s CashFlowService) CloseCash(ctx context.Context, tenantID, actorID string, item domain.CashClosing) (domain.CashClosing, error) {
+	if strings.TrimSpace(tenantID) == "" {
+		return domain.CashClosing{}, ErrUnauthorizedTenant
+	}
+	now := time.Now().UTC()
+	if item.ClosingDate.IsZero() {
+		item.ClosingDate = now
+	}
+	dateStr := item.ClosingDate.Format("2006-01-02")
+	summary, err := s.tx.GetCashFlowSummary(ctx, tenantID, dateStr, dateStr)
+	if err != nil {
+		return domain.CashClosing{}, err
+	}
+	item.ID = newID("closing")
+	item.TenantID = tenantID
+	item.TotalRevenues = summary.TotalRevenues
+	item.TotalFleetExpenses = summary.TotalFleetExpenses
+	item.TotalThirdPartyExpenses = summary.TotalThirdPartyExpenses
+	item.TotalOtherExpenses = summary.TotalExpenses - summary.TotalFleetExpenses - summary.TotalThirdPartyExpenses
+	if item.TotalOtherExpenses < 0 {
+		item.TotalOtherExpenses = 0
+	}
+	item.ClosingBalance = item.OpeningBalance + item.TotalRevenues - summary.TotalExpenses
+	item.Status = "closed"
+	item.ClosedBy = actorID
+	item.ClosedAt = &now
+	item.CreatedAt = now
+	item.UpdatedAt = now
+	item.Version = 1
+
+	return s.closings.Create(ctx, item)
+}
+
+func (s CashFlowService) GetCashClosing(ctx context.Context, tenantID, dateStr string) (domain.CashClosing, error) {
+	if strings.TrimSpace(tenantID) == "" {
+		return domain.CashClosing{}, ErrUnauthorizedTenant
+	}
+	return s.closings.FindByDate(ctx, tenantID, dateStr)
+}

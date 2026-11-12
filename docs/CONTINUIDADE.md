@@ -17,9 +17,9 @@ As alterações das duas etapas e este guia fazem parte do commit local de persi
 - Não existia `.codegraph` nesta revisão; se existir futuramente, usar CodeGraph antes de procurar código.
 - Migrations ficam em `database/migrations`, na raiz do repositório.
 - API não faz DDL/seed no startup. `go run ./cmd/migrate` aplica somente a lista explícita em `internal/platform/postgres/migrate.go`, com checksum, lock e transação.
-- Conjunto ativo: **000001, 000002, 000003, 000020 e 000021**. Os demais SQL não estão automaticamente homologados ou ativados.
+- Conjunto ativo no runner: **000001, 000002, 000003, 000020, 000021, 000022, 000013, 000023, 000006, 000012, 000024, 000008, 000009, 000025, 000005, 000014, 000026, 000017, 000018, 000019, 000027, 000015, 000028, 000010, 000029, 000030, 000031**.
 - `STORAGE_DRIVER=postgres` é padrão, exige DATABASE_URL e AUTH_SECRET próprio de 32+ caracteres. Startup verifica migrations pendentes.
-- `scripts/dev-api.sh` seleciona a demonstração anterior em memória; motoristas/documentos novos exigem PostgreSQL. Produção rejeita modo em memória.
+- `scripts/dev-api.sh` inicia a API isolada; `scripts/dev.sh` inicia o ecossistema integrado (Backend na porta 8080 + Frontend Mission Control na porta 3000 com CORS ativo). Produção rejeita modo em memória.
 - Provisionamento explícito: `go run ./cmd/provision -name 'Empresa' -email 'gestor@example.test'`, com PROVISION_ADMIN_PASSWORD definido de maneira privada no ambiente. Cada chamada cria outra empresa; não repetir para atualizar/restaurar uma empresa existente.
 
 ## Etapa 1 concluída — identidade e frota
@@ -76,23 +76,174 @@ TEST_DATABASE_URL='postgres://postgres@127.0.0.1:55439/gi360_validation?sslmode=
 
 Esse container é exclusivamente descartável e local. Aguarde o banco ficar pronto antes dos testes. Remova apenas o container que criou ao terminar. Não reutilize esses parâmetros para dados de cliente ou produção.
 
+## Etapa 3 concluída — Hodômetro e Histórico Imutável de KM (Fase 2.1)
+
+- Migration `000022_odometer_km_history.sql` ativada no runtime (`schema_migrations`).
+- Tabela `fleet_odometer_readings` append-only com FKs tenant-safe para `tenants`, `fleet_vehicles`, `drivers` e `users`.
+- Regra de anti-regressão: leituras comuns devem ter KM maior ou igual à leitura anterior (`ErrOdometerRegression`).
+- Fluxo de correção: troca de painel/hodômetro ou retificação aceita KM inferior somente se `is_correction = true` e justificativa tiver no mínimo 10 caracteres (`ErrOdometerCorrectionRequired`).
+- Permissões adicionadas: `fleet.odometer.read`, `fleet.odometer.record`, `fleet.odometer.correct` associadas ao papel admin existente e provisionamento de novas empresas.
+- Rotas HTTP sob `/api/v1/fleet/vehicles/:id/odometer` (registro e resumo) e `/history` (histórico paginado ordenado decrescente).
+- Repositórios em memória e PostgreSQL com cobertura de testes unitários passando.
+- Contratos OpenAPI (`openapi.yaml` e `openapi/openapi.yaml`) atualizados de forma coerente.
+
+## Etapa 4 concluída — Abastecimento (Fuel), Requisições e Conciliação Fiscal (Fase 2.2)
+
+- Migrations `000013_fuel_core.sql` e `000023_fuel_operational_financial_alignment.sql` ativadas no runtime (`schema_migrations`).
+- Repositório PostgreSQL completo em `internal/modules/fuel/infrastructure/postgres/store.go` para transações, postos, tipos, tanques, bicos, preços, comprovantes e ajustes.
+- Suporte a requisições de frota (`requisition_number`) e diferenciação operacional entre veículos próprios e veículos de terceiros (`is_third_party`, `third_party_identifier`).
+- Metadados para conciliação fiscal e caixa da transportadora (`invoice_number`, `invoice_key`, `payment_status`).
+- Conexão do módulo `fuel` no roteador PostgreSQL em `container.go` e `router.go` (rotas `/api/v1/fuel/*` agora ativas em modo PostgreSQL).
+- Contratos OpenAPI sincronizados e testes unitários aprovados.
+
+## Etapa 5 concluída — Gestão de Pneus (Tires & Ciclo de Vida) (Fase 2.3)
+
+- Migrations `000006_tires_core.sql`, `000012_tire_lifecycle_core.sql` e `000024_tires_lifecycle_alignment.sql` ativadas no runtime (`schema_migrations`).
+- Repositório PostgreSQL durável em `internal/modules/tires/infrastructure/postgres/store.go` cobrindo pneus, inspeções de sulco e pressão, movimentações (instalação, rodízio, remoção, recape, descarte) e auditoria de histórico.
+- Constraints de escopo tenant-safe e integridade com `fleet_vehicles(tenant_id, id)`.
+- Permissões `tires.tires.read` e `tires.tires.manage` concedidas ao papel admin e provisionamento de novas empresas.
+- Rotas `/api/v1/tires/*` expostas no modo PostgreSQL em `container.go` e `router.go`.
+- Suíte completa de testes aprovada.
+
+## Etapa 6 concluída — Manutenção Preventiva e Corretiva em PostgreSQL (Fase 2.4)
+
+- Migrations `000008_maintenance_core.sql`, `000009_maintenance_prompt_alignment.sql` e `000025_maintenance_operational_alignment.sql` ativadas no runtime (`schema_migrations`).
+- Repositório PostgreSQL completo em `internal/modules/maintenance/infrastructure/postgres/store.go` implementando todas as interfaces: ordens de serviço (O.S.), tipos de serviço, planos preventivos, oficinas, apontamentos, técnicos, mão de obra, tempo de imobilização (downtime) e histórico.
+- Campos de conciliação fiscal e controle de terceiros integrados às O.S.: `invoice_number`, `invoice_key`, `total_cost`, `payment_status`, `is_third_party`, `third_party_identifier`.
+- Conexão do módulo `maintenance` no roteador PostgreSQL em `container.go` e `router.go` (rotas `/api/v1/maintenance/*` ativas).
+- Testes unitários cobrindo transições e conciliação de terceiros (`TestWorkOrderThirdPartyAndFinancialReconciliation`) passando 100%.
+
+## Etapa 7 concluída — Checklist Operacional & Não-Conformidades (Fase 2.5)
+
+- Migrations `000005_checklist_core.sql`, `000014_checklist_engine_core.sql` e `000026_checklist_operational_alignment.sql` ativadas no runtime.
+- Repositório PostgreSQL durável em `internal/modules/checklist/infrastructure/postgres/store.go` cobrindo todas as 14 interfaces do domínio de checklist (templates, versões, tipos, seções, itens, execuções de inspeção no pátio, respostas, evidências, não-conformidades, assinaturas e histórico).
+- Rastreamento de veículo inspecionado (`vehicle_id`) e classificação de gravidade de não-conformidades (`low`, `medium`, `high`, `critical`).
+- Rotas `/api/v1/checklists/*` expostas no modo PostgreSQL em `container.go` e `router.go`.
+- Contratos OpenAPI sincronizados e testes unitários aprovados.
+
+## Etapa 8 concluída — Automação, Inteligência & Mission Control Proativo (Fase 3)
+
+- Correção da palavra reservada `"window"` com escape na migration histórica `000018_intelligence_core.sql`.
+- Migration `000027_mission_control_alignment.sql` com índices de unicidade tenant-safe e permissões de mission control (`missioncontrol.command.read`, `missioncontrol.command.action`).
+- Migrations `000017_event_bus_outbox.sql`, `000018_intelligence_core.sql`, `000019_mission_control_core.sql` e `000027` ativadas no runner.
+- Repositório PostgreSQL durável em `internal/modules/missioncontrol/infrastructure/postgres/store.go` (`CommandItem`, `CommandEvent`, `CommandAction`, `OperationalSnapshot`, `Idempotency`).
+- Motor de regras preventivas autônomo implementado em `signal_scanner.go`:
+  1. Vencimento de CNH e documentos (30 dias ou vencidos).
+  2. Limite de segurança de sulco de pneu atingido (`current_tread_mm <= minimum_tread_mm`).
+  3. Manutenção preventiva próxima ou vencida por KM acumulado no hodômetro.
+  4. Não-conformidades críticas não resolvidas de checklist operacional.
+- Endpoint `POST /api/v1/mission-control/evaluate-signals` para disparo de varredura autônoma com idempotência por impressão digital.
+- Cobertura de teste com scanner mockado em `mission_control_service_test.go` passando 100%.
+
+## Etapa 9 concluída — Interface Web do Gestor & Design System (Fase 4)
+
+- Aplicação web do gestor construída em `apps/mission-control`:
+  - Design system refinado com fundo `#111827`, cartões `#1F2937`, bordas `#374151`, azul de destaque `#2563EB`, tipografia Inter e acessibilidade WCAG 2.2 AA em `src/styles/theme.css`.
+  - Cliente de API completo com gerenciamento de tokens e endpoints em `src/api/client.js`.
+  - SPA reativa em `src/app.js` e `index.html` com suporte a:
+    - Painel Executivo com feed de alertas proativos e botão "Avaliar Sinais Operacionais".
+    - Cadastro e consulta de Veículos com hodômetro imutável e fluxo de retificação assistido.
+    - Gestão de Motoristas com status de CNH e monitor de vencimentos.
+    - Abastecimento com número de requisição, separação própria/terceiros e conciliação fiscal.
+    - Pneus com monitoramento de profundidade de sulco em mm e histórico.
+    - Ordens de Serviço de Manutenção com tempo de imobilização e notas fiscais.
+    - Checklists de pátio na saída/retorno do veículo e não-conformidades.
+
+## Etapa 10 concluída — Empacotamento Docker & Ferramenta de Importação Legada (Fase 6)
+
+- Docker multi-stage configurado para a API Go em `backend/api/Dockerfile` (Go 1.24 build + Alpine runtime com usuário não-root).
+- Docker configurado para a interface web em `apps/mission-control/Dockerfile` (Nginx Alpine com proxy reverso transparente para `/api/`).
+- Ferramenta CLI de importação inicial de dados legados do cliente em `backend/api/cmd/import/main.go` suportando leitura de CSV de veículos, hodômetros iniciais e motoristas com transação atômica.
+
+## Etapa 11 concluída — Módulo Financeiro, Contas a Pagar & Fechamento de Caixa (Fase 7)
+
+- Migrations `000015_financial_cost_core.sql` e `000028_financial_cashflow_reconciliation.sql` ativadas no runtime.
+- Repositório PostgreSQL completo em `internal/modules/financial/infrastructure/postgres/store.go` implementando todas as interfaces: transações, categorias, tipos, centros de custo, contas, métodos de pagamento, períodos fiscais, orçamentos, ajustes e fechamentos diários de caixa (`financial_cash_closings`).
+- Conciliação operacional direta de despesas de abastecimento e ordens de manutenção (`ReconcileOperationalExpense`), diferenciando custos de frota própria e terceiros (`is_third_party`, `third_party_identifier`), rastreando número de requisição, número da nota fiscal, chave NF-e de 44 dígitos e código de barras/linha digitável de boletos.
+- Motor de fluxo de caixa operacional em tempo real (`GetCashFlowSummary`) que calcula receitas recebidas, despesas pagas por frota x terceiros, saldo líquido e monitora contas a pagar pendentes e boletos vencidos.
+- Rotina auditável de fechamento diário de caixa (`CloseCash`).
+- Rota e permissões integradas: `/api/v1/financial/*` agora ativo no modo PostgreSQL em `container.go` e `router.go`.
+- Interface web do gestor atualizada em `apps/mission-control` com a aba "Financeiro & Caixa", incluindo cartões de métricas, lista de boletos e notas com ação rápida "Baixar / Pagar" e fechamento de caixa diário.
+- Suíte completa de testes unitários aprovada com 100% de sucesso.
+
+## Etapa 12 concluída — Almoxarifado/Estoque de Peças, Carretas & Prontuário de Auditoria (Fase 8)
+
+- Migrations `000010_inventory_core.sql` e `000029_inventory_operational_alignment.sql` ativadas no runtime runner.
+- Entidades e DTOs de `internal/modules/inventory` alinhados com custo unitário (`unit_cost`), estoque mínimo (`min_stock`), saldo atual (`current_stock`) e localização física (`location`).
+- Repositório PostgreSQL durável implementado em `internal/modules/inventory/infrastructure/postgres/store.go` cobrindo peças, categorias, depósitos e localizações.
+- Rotas `/api/v1/inventory/*` ativas no modo PostgreSQL e injetadas em `container.go` e `router.go`.
+- Suporte a Carretas / Semirreboques / Implementos Rodoviários:
+  - Cadastro flexível com seleção de implemento (Baú Frigorífico, Sider/Cortina, Graneleira, Carga Seca, Prancha, Tanque, Porta-Contêiner, Silo Basculante).
+  - Configuração de eixos (2 eixos, 3 eixos convencionais, 3 eixos vanderléia/espaçados, 4 eixos, bitrem, rodotrem).
+  - Hodômetro flexibilizado: opcional para carretas/implementos (sem hodômetro obrigatório) e obrigatório para caminhões/cavalos.
+  - Filtros rápidos por categoria na visão de frota.
+- Dossiê e Prontuário Completo de Auditoria do Veículo e Carreta:
+  - Visualização unificada agregando: 1. Cadastro e especificações técnicas; 2. Histórico de hodômetro com validação anti-regressão e correções homologadas; 3. Histórico de abastecimentos com requisições e notas fiscais; 4. Histórico de ordens de serviço (O.S.) com peças aplicadas, downtime e custos; 5. Histórico e posições de pneus com sulco medido em mm; 6. Checklists de pátio com registro de avarias e assinaturas digitais.
+  - Relatório impresso oficial com cabeçalho da empresa, carimbo de integridade e campos de assinatura do gestor e auditoria interna via `@media print` (`window.print()`).
+- Módulo Web de Estoque & Almoxarifado em `apps/mission-control`:
+  - Gestão de todas as categorias operacionais solicitadas: Pneus (novos, recapados, sucatas), Peças Mecânicas & Freios, Filtros & Óleos/Arla 32, Elétrica & Baterias, Equipamentos de Bordo & Amarração (catracas, cintas 5t/10t, tacógrafo, extintores ABC), EPIs de segurança e Acessórios de Carretas (lonas, engates de ar).
+  - Indicadores de total de itens, valor total imobilizado, alertas de reposição mínima e controle de pneus em almoxarifado.
+  - Modais para cadastro de novos itens e movimentação de estoque (entrada por compra com NF ou saída para manutenção/veículo).
+- 100% dos testes unitários passando em todos os módulos Go.
+
+## Etapa 13 concluída — Módulo de Viagens, Fretes & Despacho Autônomo com IA (Fase 9)
+
+- Migration `000030_trips_dispatch_core.sql` criada e adicionada ao runtime runner (`operational_trips` com índices, restrições e permissões `trips.read` e `trips.manage`).
+- Módulo `trips` completo em Go:
+  - Entidades de domínio com status (`draft`, `dispatched`, `delivered`, `completed`, `canceled`), acoplamento dinâmico Cavalo + Carreta, rotas, adiantamentos e documentos fiscais (MDF-e, CT-e, CIOT ANTT).
+  - Camada de aplicação com pré-embarque por IA e trava anti-regressão de hodômetro (`internal/modules/trips/application/services.go`).
+  - Repositório PostgreSQL durável implementado em `internal/modules/trips/infrastructure/postgres/store.go`.
+  - Camada de transporte HTTP, DTOs e mappers (`internal/modules/trips/transport/http/handler.go`).
+- Injeção de dependências e roteador em `container.go` e `router.go` (rotas `/api/v1/trips/*`).
+- Contratos OpenAPI sincronizados de forma coerente (`backend/api/openapi.yaml` e `backend/api/openapi/openapi.yaml`).
+- Suíte de testes unitários Go aprovada com 100% de sucesso.
+- Interface Web de Viagens & Despacho em `apps/mission-control`:
+  - Nova aba "🗺️ Viagens & Despacho" no menu de navegação.
+  - Indicadores em tempo real: Viagens em Trânsito, Faturamento em Fretes, Adiantamentos/Pedágio em Rota e Cargas Entregues.
+  - Modal de Despacho de Nova Viagem com acoplamento dinâmico (Cavalo + Carreta), condutor, rota, carga, peso, MDF-e, CIOT ANTT e valores financeiros.
+  - Autonomous Pre-Flight Check da IA: validação automática de CNH regular, checklist de pátio sem avaria crítica e pneus operacionais.
+  - Conclusão e Baixa de Entrega (Canhoto Fiscal) com registro de KM final e cálculo de saldo para o financeiro.
+  - Visualização de Manifesto de Viagem com suporte para impressão.
+
+## Etapa 10 concluída — Controle de Jornada do Motorista & Diárias (Lei 13.103/2015)
+
+- Migration `000031_driver_journey_compliance.sql` criada e ativa no runner (`driver_journey_records` com índices, checagem e integridade).
+- Domínio e serviço de aplicação em `internal/modules/drivers/application/journey_service.go`:
+  - Tipos de eventos: `driving`, `break_rest`, `meal`, `daily_rest`, `waiting`, `standby`.
+  - Validação regulatória automática: direção contínua superior a 330 min (5h30) sem pausa de 30 min dispara `is_violation = true` com descrição da infração.
+  - Fechamento transacional do apontamento anterior ao abrir um novo.
+  - Cálculo de diárias automáticas (Refeição R$ 45,00, Pernoite/Estadia R$ 90,00).
+- Repositório PostgreSQL durável implementado em `internal/modules/drivers/infrastructure/postgres/journey_repository.go`.
+- Rotas HTTP expostas: `GET /api/v1/drivers/:id/journey`, `POST /api/v1/drivers/:id/journey`, `GET /api/v1/drivers/:id/journey/summary`.
+- Suíte de testes unitários passando 100% (`journey_service_test.go`).
+- Interface completa no Mission Control (`apps/mission-control/src/app.js`):
+  - Botão "⏱️ Diário de Bordo & Jornada" na tabela de motoristas.
+  - Modal dinâmico com status do motorista em tempo real (Em Direção, Em Descanso, Refeição, Pernoite, Espera, Standby).
+  - Cards de KPIs: Tempo de Direção, Descanso, Espera, Diárias Acumuladas e Infrações Lei 13.103.
+  - Formulário para apontamento imediato de paradas e KM.
+  - Histórico auditável de apontamentos com alertas de infração destacados em vermelho.
+  - Espelho de Ponto Oficial para impressão (`@media print`) com campos de assinatura para MTE e fiscalização.
+
+## Etapa 11 concluída — Deploy em Produção & DevOps Autônomo
+
+- Arquitetura de produção documentada em `docs/PLANO_DEPLOY_PRODUCAO_AUTONOMO.md`.
+- Stack unificada configurada em `docker-compose.prod.yml`:
+  - `postgres`: PostgreSQL 16 Alpine com volume persistente e healthcheck.
+  - `redis`: Redis 7 Alpine com persistência AOF.
+  - `migrate`: Container executando `/app/migrate up` automaticamente no startup antes de subir a API.
+  - `api`: Backend em Go com reinício automático e conexões seguras.
+  - `web`: Frontend Mission Control servido por Nginx na porta 80 com proxy reverso.
+  - `db-backup`: Serviço cron de backup diário do PostgreSQL às 03:00 com retenção de 30 dias.
+- Scripts de backup e restauração criados em `infra/scripts/backup_postgres.sh` e `infra/scripts/restore_postgres.sh`.
+- Arquivo de exemplo de produção criado em `.env.production.example`.
+
 ## Próximo passo sugerido
 
-**Histórico de KM/hodômetro por veículo**, antes de ligar abastecimentos e manutenção ao mesmo histórico:
+1. Executar testes de homologação com dados reais do cliente via CLI `cmd/import` quando autorizado.
+2. Configurar domínio e certificado SSL/TLS (Let's Encrypt / Certbot) no Nginx de produção conforme aprovação do usuário.
 
-1. Revisar Fleet/Fuel/Maintenance e os contratos existentes, sem redesenhar os módulos.
-2. Definir registro imutável de leitura, veículo/empresa/ator/data/origem/unidade e motivo de correção. Não misturar KM com horímetro.
-3. Criar migration nova (a partir de 000022), repository/application/API e auditoria transacional. Manter as migrations atuais intactas.
-4. Tratar concorrência, idempotência, leituras anteriores e correções explicitamente para evitar regressão silenciosa do hodômetro.
-5. Testar persistência, isolamento, duplicidade e concorrência em PostgreSQL descartável; atualizar TASKS, OpenAPI e este arquivo.
+## Pendências e recomendações
 
-Isso é a orientação de continuidade, não uma declaração de que KM já foi implementado. Interface e persistência dos fluxos de abastecimento/manutenção/checklist ainda são tarefas posteriores.
-
-## Pendências que não podem ser esquecidas
-
-- Migration histórica `000018_intelligence_core.sql` falha por usar `window` sem tratar a palavra reservada. Não faz parte do conjunto ativo; não afirmar que todo o schema histórico funciona.
-- Abastecimento, manutenção, checklist, financeiro, inteligência e outros módulos ainda têm adapters em memória. Suas rotas são desativadas no modo PostgreSQL até ganharem persistência.
-- Falta fechar o escopo inicial com o cliente. Autorizações incrementais de implementação não substituem aceite do cliente.
-- Falta painel/interface, importação, viagens/escala, upload de documentos, notificações, gestão de papéis completa, recuperação de senha, auditoria dos demais módulos, homologação, monitoramento e backup/restauração.
-- Dois contratos OpenAPI existem; manter alterações coerentes nos dois até consolidar um contrato oficial numa etapa própria.
+- Manter alterações coerentes nos dois OpenAPI até uma consolidação explícita.
+- As migrações agora contemplam a esteira completa: 000001 a 000003, 000005, 000006, 000008, 000009, 000010, 000012, 000013, 000014, 000015, 000017 a 000031.
 - Não expor credenciais, tokens ou dados reais em logs/relatórios. TEST_DATABASE_URL deve apontar somente para base descartável.

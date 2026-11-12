@@ -6,12 +6,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/geevheit/intelligence360/backend/api/internal/core/middleware"
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/financial/application"
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/financial/domain"
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/financial/ports"
 	"github.com/geevheit/intelligence360/backend/api/internal/shared/contextkeys"
-	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
@@ -24,10 +25,33 @@ type Handler struct {
 	periods      ports.PeriodService
 	budgets      ports.BudgetService
 	adjustments  ports.AdjustmentService
+	cashflow     ports.CashFlowService
 }
 
-func NewHandler(transactions ports.TransactionService, categories ports.CatalogService[domain.CostCategory], types ports.CatalogService[domain.CostType], centers ports.CatalogService[domain.CostCenter], accounts ports.CatalogService[domain.Account], methods ports.CatalogService[domain.PaymentMethod], periods ports.PeriodService, budgets ports.BudgetService, adjustments ports.AdjustmentService) Handler {
-	return Handler{transactions: transactions, categories: categories, types: types, centers: centers, accounts: accounts, methods: methods, periods: periods, budgets: budgets, adjustments: adjustments}
+func NewHandler(
+	transactions ports.TransactionService,
+	categories ports.CatalogService[domain.CostCategory],
+	types ports.CatalogService[domain.CostType],
+	centers ports.CatalogService[domain.CostCenter],
+	accounts ports.CatalogService[domain.Account],
+	methods ports.CatalogService[domain.PaymentMethod],
+	periods ports.PeriodService,
+	budgets ports.BudgetService,
+	adjustments ports.AdjustmentService,
+	cashflow ports.CashFlowService,
+) Handler {
+	return Handler{
+		transactions: transactions,
+		categories:   categories,
+		types:        types,
+		centers:      centers,
+		accounts:     accounts,
+		methods:      methods,
+		periods:      periods,
+		budgets:      budgets,
+		adjustments:  adjustments,
+		cashflow:     cashflow,
+	}
 }
 
 func (h Handler) RegisterRoutes(router *gin.RouterGroup) {
@@ -62,6 +86,13 @@ func (h Handler) RegisterRoutes(router *gin.RouterGroup) {
 	group.POST("/budgets", h.createBudget)
 	group.GET("/adjustments", h.searchAdjustments)
 	group.POST("/adjustments", h.adjust)
+
+	// Cash flow, reconciliation and daily closing routes
+	group.GET("/cash-flow/summary", h.getCashFlowSummary)
+	group.POST("/reconcile/operational", h.reconcileOperationalExpense)
+	group.GET("/pending-invoices", h.listPendingInvoices)
+	group.POST("/cash-closing", h.closeCash)
+	group.GET("/cash-closing/:date", h.getCashClosing)
 }
 
 func (h Handler) createExpense(c *gin.Context) {
@@ -286,4 +317,57 @@ func actorID(c *gin.Context) string {
 	v, _ := c.Get(string(contextkeys.ActorID))
 	s, _ := v.(string)
 	return s
+}
+
+func (h Handler) getCashFlowSummary(c *gin.Context) {
+	if h.cashflow == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "cashflow service not configured"})
+		return
+	}
+	summary, err := h.cashflow.GetSummary(c.Request.Context(), tenantID(c), c.Query("start_date"), c.Query("end_date"))
+	respond(c, http.StatusOK, summary, err)
+}
+
+func (h Handler) reconcileOperationalExpense(c *gin.Context) {
+	if h.cashflow == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "cashflow service not configured"})
+		return
+	}
+	var req domain.OperationalExpenseReconciliation
+	if !bind(c, &req) {
+		return
+	}
+	saved, err := h.cashflow.ReconcileOperationalExpense(c.Request.Context(), tenantID(c), actorID(c), req)
+	respond(c, http.StatusCreated, saved, err)
+}
+
+func (h Handler) listPendingInvoices(c *gin.Context) {
+	if h.cashflow == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "cashflow service not configured"})
+		return
+	}
+	page, err := h.cashflow.ListPendingInvoices(c.Request.Context(), tenantID(c), query(c))
+	respond(c, http.StatusOK, page, err)
+}
+
+func (h Handler) closeCash(c *gin.Context) {
+	if h.cashflow == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "cashflow service not configured"})
+		return
+	}
+	var req domain.CashClosing
+	if !bind(c, &req) {
+		return
+	}
+	saved, err := h.cashflow.CloseCash(c.Request.Context(), tenantID(c), actorID(c), req)
+	respond(c, http.StatusCreated, saved, err)
+}
+
+func (h Handler) getCashClosing(c *gin.Context) {
+	if h.cashflow == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "cashflow service not configured"})
+		return
+	}
+	closing, err := h.cashflow.GetCashClosing(c.Request.Context(), tenantID(c), c.Param("date"))
+	respond(c, http.StatusOK, closing, err)
 }

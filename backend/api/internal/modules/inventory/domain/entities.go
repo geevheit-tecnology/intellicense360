@@ -22,6 +22,10 @@ type Part struct {
 	ModelID      string            `json:"model_id,omitempty"`
 	UnitID       string            `json:"unit_id"`
 	Status       StockStatus       `json:"status"`
+	UnitCost     float64           `json:"unit_cost"`
+	MinStock     float64           `json:"min_stock"`
+	CurrentStock float64           `json:"current_stock"`
+	Location     string            `json:"location,omitempty"`
 	Metadata     map[string]string `json:"metadata,omitempty"`
 	CreatedAt    time.Time         `json:"created_at"`
 	UpdatedAt    time.Time         `json:"updated_at"`

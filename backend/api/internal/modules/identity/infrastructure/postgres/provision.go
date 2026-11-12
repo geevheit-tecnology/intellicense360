@@ -47,6 +47,9 @@ func Provision(ctx context.Context, db *sql.DB, name, email, password string) (d
 			"checklist.checklists.manage",
 			"checklist.checklist.manage",
 			"fleet.vehicles.manage",
+			"fleet.odometer.read",
+			"fleet.odometer.record",
+			"fleet.odometer.correct",
 			"drivers.read",
 			"drivers.manage",
 			"documents.read",
@@ -54,10 +57,12 @@ func Provision(ctx context.Context, db *sql.DB, name, email, password string) (d
 			"fleet.assets.manage",
 			"financial.financial.manage",
 			"ciot.ciot.manage",
+			"fuel.fuel.read",
 			"fuel.fuel.manage",
 			"intelligence.intelligence.manage",
 			"intelligence.intelligence.read",
 			"inventory.inventory.manage",
+			"maintenance.maintenance.read",
 			"maintenance.maintenance.manage",
 			"mission_control.read",
 			"mission_control.create",
@@ -68,7 +73,10 @@ func Provision(ctx context.Context, db *sql.DB, name, email, password string) (d
 			"mission_control.snapshot",
 			"mission_control.admin",
 			"suppliers.suppliers.manage",
+			"tires.tires.read",
 			"tires.tires.manage",
+			"trips.read",
+			"trips.manage",
 		} {
 			_, err := platform.ExecutorFor(ctx, db).ExecContext(ctx, `INSERT INTO permissions(id,key,description) VALUES($1,$2,$2) ON CONFLICT(key) DO NOTHING`, uuid.NewString(), key)
 			if err != nil {

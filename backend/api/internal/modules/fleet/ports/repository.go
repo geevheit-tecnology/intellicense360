@@ -74,3 +74,10 @@ type AssetRepository interface {
 	Update(ctx context.Context, asset domain.Asset) (domain.Asset, error)
 	Delete(ctx context.Context, tenantID string, id string) error
 }
+
+type OdometerRepository interface {
+	Record(ctx context.Context, reading domain.OdometerReading) (domain.OdometerReading, error)
+	GetLatest(ctx context.Context, tenantID string, vehicleID string) (*domain.OdometerReading, error)
+	ListByVehicle(ctx context.Context, tenantID string, vehicleID string, query Query) (Page[domain.OdometerReading], error)
+	FindByID(ctx context.Context, tenantID string, id string) (domain.OdometerReading, error)
+}

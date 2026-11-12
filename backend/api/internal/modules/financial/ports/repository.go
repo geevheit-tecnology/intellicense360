@@ -26,6 +26,7 @@ type TransactionRepository interface {
 	Search(context.Context, string, Query) (Page[domain.FinancialTransaction], error)
 	Update(context.Context, domain.FinancialTransaction) (domain.FinancialTransaction, error)
 	Delete(context.Context, string, string) error
+	GetCashFlowSummary(context.Context, string, string, string) (domain.CashFlowSummary, error)
 }
 type CatalogRepository[T any] interface {
 	Create(context.Context, T) (T, error)
@@ -45,4 +46,9 @@ type BudgetRepository interface {
 type AdjustmentRepository interface {
 	Create(context.Context, domain.FinancialAdjustment) (domain.FinancialAdjustment, error)
 	Search(context.Context, string, Query) (Page[domain.FinancialAdjustment], error)
+}
+type CashClosingRepository interface {
+	Create(context.Context, domain.CashClosing) (domain.CashClosing, error)
+	FindByDate(context.Context, string, string) (domain.CashClosing, error)
+	Search(context.Context, string, Query) (Page[domain.CashClosing], error)
 }

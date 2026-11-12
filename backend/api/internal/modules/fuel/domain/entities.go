@@ -56,6 +56,12 @@ type FuelTransaction struct {
 	VehicleReference   string                `json:"vehicle_reference,omitempty"`
 	AssetReference     string                `json:"asset_reference,omitempty"`
 	PaymentMethod      string                `json:"payment_method,omitempty"`
+	RequisitionNumber  string                `json:"requisition_number,omitempty"`
+	IsThirdParty       bool                  `json:"is_third_party"`
+	ThirdPartyIdentifier string              `json:"third_party_identifier,omitempty"`
+	InvoiceNumber      string                `json:"invoice_number,omitempty"`
+	InvoiceKey         string                `json:"invoice_key,omitempty"`
+	PaymentStatus      string                `json:"payment_status,omitempty"`
 	Notes              string                `json:"notes,omitempty"`
 	Status             FuelTransactionStatus `json:"status"`
 	CancellationReason string                `json:"cancellation_reason,omitempty"`

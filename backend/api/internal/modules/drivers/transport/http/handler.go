@@ -2,19 +2,26 @@ package http
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+
 	"github.com/geevheit/intelligence360/backend/api/internal/core/middleware"
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/application"
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/domain"
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/drivers/ports"
 	"github.com/geevheit/intelligence360/backend/api/internal/shared/contextkeys"
-	"github.com/gin-gonic/gin"
-	"net/http"
-	"strconv"
 )
 
-type Handler struct{ service ports.ManagementService }
+type Handler struct {
+	service ports.ManagementService
+	journey ports.JourneyService
+}
 
-func NewHandler(service ports.ManagementService) *Handler { return &Handler{service: service} }
+func NewHandler(service ports.ManagementService, journey ports.JourneyService) *Handler {
+	return &Handler{service: service, journey: journey}
+}
 func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	group := router.Group("/drivers")
 	group.GET("", middleware.RequirePermission("drivers.read"), h.search)
@@ -22,6 +29,9 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	group.POST("", middleware.RequirePermission("drivers.manage"), h.create)
 	group.PUT("/:id", middleware.RequirePermission("drivers.manage"), h.update)
 	group.DELETE("/:id", middleware.RequirePermission("drivers.manage"), h.delete)
+	group.GET("/:id/journey", middleware.RequirePermission("drivers.read"), h.listJourney)
+	group.POST("/:id/journey", middleware.RequirePermission("drivers.manage"), h.recordJourney)
+	group.GET("/:id/journey/summary", middleware.RequirePermission("drivers.read"), h.getJourneySummary)
 }
 func tenant(c *gin.Context) string {
 	id, _ := contextkeys.TenantIDFromContext(c.Request.Context())
@@ -104,4 +114,38 @@ func (h *Handler) search(c *gin.Context) {
 	q := ports.Query{Search: c.Query("search"), Status: c.Query("status"), VehicleID: c.Query("vehicle_id"), Page: page, PageSize: size}
 	result, err := h.service.Search(c.Request.Context(), tenant(c), q)
 	respond(c, http.StatusOK, result, err)
+}
+
+func (h *Handler) listJourney(c *gin.Context) {
+	if h.journey == nil {
+		c.JSON(http.StatusOK, []domain.DriverJourneyRecord{})
+		return
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	items, err := h.journey.ListJourney(c.Request.Context(), tenant(c), c.Param("id"), limit)
+	respond(c, http.StatusOK, items, err)
+}
+
+func (h *Handler) recordJourney(c *gin.Context) {
+	if h.journey == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "journey service not configured"})
+		return
+	}
+	var req domain.DriverJourneyRecord
+	if !bind(c, &req) {
+		return
+	}
+	req.TenantID = tenant(c)
+	req.DriverID = c.Param("id")
+	saved, err := h.journey.RecordEvent(c.Request.Context(), req)
+	respond(c, http.StatusCreated, saved, err)
+}
+
+func (h *Handler) getJourneySummary(c *gin.Context) {
+	if h.journey == nil {
+		c.JSON(http.StatusOK, domain.JourneySummary{})
+		return
+	}
+	summary, err := h.journey.GetSummary(c.Request.Context(), tenant(c), c.Param("id"))
+	respond(c, http.StatusOK, summary, err)
 }

@@ -20,12 +20,14 @@ type MemoryStore struct {
 	categories map[string]domain.VehicleCategoryEntity
 	types      map[string]domain.VehicleTypeEntity
 	assets     map[string]domain.Asset
+	odometer   map[string]domain.OdometerReading
 }
 
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
 		vehicles: map[string]domain.Vehicle{}, brands: map[string]domain.VehicleBrand{}, models: map[string]domain.VehicleModel{},
 		categories: map[string]domain.VehicleCategoryEntity{}, types: map[string]domain.VehicleTypeEntity{}, assets: map[string]domain.Asset{},
+		odometer: map[string]domain.OdometerReading{},
 	}
 }
 
@@ -35,6 +37,7 @@ func (s *MemoryStore) Models() VehicleModelRepository        { return VehicleMod
 func (s *MemoryStore) Categories() VehicleCategoryRepository { return VehicleCategoryRepository{s: s} }
 func (s *MemoryStore) Types() VehicleTypeRepository          { return VehicleTypeRepository{s: s} }
 func (s *MemoryStore) Assets() AssetRepository               { return AssetRepository{s: s} }
+func (s *MemoryStore) Odometer() OdometerRepository          { return OdometerRepository{s: s} }
 
 type VehicleRepository struct{ s *MemoryStore }
 
@@ -392,3 +395,57 @@ func page[T any](items []T, query ports.Query) ports.Page[T] {
 }
 
 func key(tenantID string, id string) string { return tenantID + ":" + id }
+
+type OdometerRepository struct{ s *MemoryStore }
+
+var _ ports.OdometerRepository = OdometerRepository{}
+
+func (r OdometerRepository) Record(_ context.Context, reading domain.OdometerReading) (domain.OdometerReading, error) {
+	r.s.mu.Lock()
+	defer r.s.mu.Unlock()
+	r.s.odometer[key(reading.TenantID, reading.ID)] = reading
+	return reading, nil
+}
+
+func (r OdometerRepository) GetLatest(_ context.Context, tenantID string, vehicleID string) (*domain.OdometerReading, error) {
+	r.s.mu.RLock()
+	defer r.s.mu.RUnlock()
+	var latest *domain.OdometerReading
+	for _, item := range r.s.odometer {
+		if item.TenantID == tenantID && item.VehicleID == vehicleID {
+			if latest == nil || item.ReadAt.After(latest.ReadAt) || (item.ReadAt.Equal(latest.ReadAt) && item.CreatedAt.After(latest.CreatedAt)) {
+				val := item
+				latest = &val
+			}
+		}
+	}
+	return latest, nil
+}
+
+func (r OdometerRepository) ListByVehicle(_ context.Context, tenantID string, vehicleID string, query ports.Query) (ports.Page[domain.OdometerReading], error) {
+	r.s.mu.RLock()
+	defer r.s.mu.RUnlock()
+	items := []domain.OdometerReading{}
+	for _, item := range r.s.odometer {
+		if item.TenantID == tenantID && item.VehicleID == vehicleID {
+			items = append(items, item)
+		}
+	}
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].ReadAt.Equal(items[j].ReadAt) {
+			return items[i].CreatedAt.After(items[j].CreatedAt)
+		}
+		return items[i].ReadAt.After(items[j].ReadAt)
+	})
+	return page(items, query), nil
+}
+
+func (r OdometerRepository) FindByID(_ context.Context, tenantID string, id string) (domain.OdometerReading, error) {
+	r.s.mu.RLock()
+	defer r.s.mu.RUnlock()
+	item, ok := r.s.odometer[key(tenantID, id)]
+	if !ok {
+		return domain.OdometerReading{}, application.ErrNotFound
+	}
+	return item, nil
+}

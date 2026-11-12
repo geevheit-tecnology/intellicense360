@@ -39,6 +39,9 @@ func (s FuelTransactionService) Create(ctx context.Context, item domain.FuelTran
 	if item.Status == domain.FuelTransactionCompleted {
 		item.CompletedAt = &now
 	}
+	if item.PaymentStatus == "" {
+		item.PaymentStatus = "pending"
+	}
 	item.TotalAmount = normalizeMoney(item.TotalAmount)
 	item.CreatedAt = now
 	item.UpdatedAt = now
@@ -415,6 +418,9 @@ func validateTransaction(item domain.FuelTransaction) error {
 	}
 	expected := normalizeMoney(item.Quantity * item.UnitPrice)
 	if math.Abs(expected-normalizeMoney(item.TotalAmount)) > 0.01 {
+		return ErrInvalidFuelData
+	}
+	if item.PaymentStatus != "" && item.PaymentStatus != "pending" && item.PaymentStatus != "approved" && item.PaymentStatus != "paid" && item.PaymentStatus != "canceled" {
 		return ErrInvalidFuelData
 	}
 	return nil

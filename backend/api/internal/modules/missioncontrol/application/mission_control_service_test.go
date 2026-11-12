@@ -184,3 +184,71 @@ func TestSummarySnapshotAndRecommendationsAreDeterministic(t *testing.T) {
 		t.Fatalf("unexpected history: %#v", history)
 	}
 }
+
+type mockSignalScanner struct {
+	signals []domain.CommandItem
+}
+
+func (m mockSignalScanner) ScanOperationalSignals(ctx context.Context, tenantID string) ([]domain.CommandItem, error) {
+	return m.signals, nil
+}
+
+func TestEvaluateSignalsMockScanner(t *testing.T) {
+	service := newTestService()
+	ctx := context.Background()
+
+	scanner := mockSignalScanner{
+		signals: []domain.CommandItem{
+			{
+				TenantID:     "tenant-a",
+				Type:         domain.TypeAlert,
+				Category:     domain.CategoryDocument,
+				Severity:     domain.SeverityCritical,
+				Priority:     domain.PriorityUrgent,
+				Title:        "CNH vencida: Carlos",
+				Confidence:   1.0,
+				ImpactScore:  0.9,
+				RiskScore:    0.9,
+				Fingerprint:  "tenant-a:alert:document:cnh:123",
+			},
+			{
+				TenantID:     "tenant-a",
+				Type:         domain.TypeAlert,
+				Category:     domain.CategoryTire,
+				Severity:     domain.SeverityCritical,
+				Priority:     domain.PriorityUrgent,
+				Title:        "Pneu P-01 sulco crítico",
+				Confidence:   1.0,
+				ImpactScore:  0.8,
+				RiskScore:    0.85,
+				Fingerprint:  "tenant-a:alert:tire:pneu:456",
+			},
+		},
+	}
+
+	serviceWithScanner := service.WithSignalScanner(scanner)
+	count, err := serviceWithScanner.EvaluateSignals(ctx, "tenant-a")
+	if err != nil {
+		t.Fatalf("evaluate signals failed: %v", err)
+	}
+	if count != 2 {
+		t.Fatalf("expected 2 signals created, got %d", count)
+	}
+
+	// Repeated evaluation shouldn't duplicate open signals
+	count2, err := serviceWithScanner.EvaluateSignals(ctx, "tenant-a")
+	if err != nil {
+		t.Fatalf("re-evaluation failed: %v", err)
+	}
+	if count2 != 0 {
+		t.Fatalf("expected 0 new signals due to fingerprint deduplication, got %d", count2)
+	}
+
+	summary, err := serviceWithScanner.Summary(ctx, "tenant-a")
+	if err != nil {
+		t.Fatalf("summary failed: %v", err)
+	}
+	if summary.TotalOpen != 2 || summary.Critical != 2 {
+		t.Fatalf("unexpected summary after signals: %#v", summary)
+	}
+}

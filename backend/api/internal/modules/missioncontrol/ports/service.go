@@ -22,4 +22,5 @@ type CommandService interface {
 	RebuildSnapshot(ctx context.Context, tenantID string) (domain.OperationalSnapshot, error)
 	LatestSnapshot(ctx context.Context, tenantID string) (domain.OperationalSnapshot, error)
 	EvaluateRecommendations(ctx context.Context, tenantID string) ([]domain.CommandAction, error)
+	EvaluateSignals(ctx context.Context, tenantID string) (int, error)
 }

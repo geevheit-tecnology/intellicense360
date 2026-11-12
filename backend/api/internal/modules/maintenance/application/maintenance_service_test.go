@@ -136,6 +136,36 @@ func TestMaintenanceCatalogWorkshopAndTechnician(t *testing.T) {
 	}
 }
 
+func TestWorkOrderThirdPartyAndFinancialReconciliation(t *testing.T) {
+	store := infrastructure.NewMemoryStore()
+	service := application.NewWorkOrderService(store.WorkOrders(), store.History())
+
+	wo := domain.WorkOrder{
+		TenantID:             "tenant-a",
+		Title:                "Third-party engine overhaul",
+		Kind:                 domain.KindCorrective,
+		Priority:             domain.PriorityHigh,
+		InvoiceNumber:        "NF-9876",
+		InvoiceKey:           "35240100000000000000550010000098761000098765",
+		TotalCost:            4500.50,
+		PaymentStatus:        "pending",
+		IsThirdParty:         true,
+		ThirdPartyIdentifier: "ABC-1234 (Agregado Silva)",
+	}
+
+	created, err := service.Create(context.Background(), wo)
+	if err != nil {
+		t.Fatalf("create failed: %v", err)
+	}
+
+	if !created.IsThirdParty || created.ThirdPartyIdentifier != "ABC-1234 (Agregado Silva)" {
+		t.Fatalf("third-party tracking mismatch: %+v", created)
+	}
+	if created.InvoiceNumber != "NF-9876" || created.TotalCost != 4500.50 {
+		t.Fatalf("financial reconciliation mismatch: %+v", created)
+	}
+}
+
 func validWorkOrder(tenantID string) domain.WorkOrder {
 	return domain.WorkOrder{TenantID: tenantID, Title: "Brake repair", Kind: domain.KindCorrective, Priority: domain.PriorityHigh}
 }

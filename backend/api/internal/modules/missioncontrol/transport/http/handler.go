@@ -36,6 +36,12 @@ func (h Handler) RegisterRoutes(router *gin.RouterGroup) {
 	group.POST("/snapshot/rebuild", middleware.RequirePermission("mission_control.snapshot"), h.rebuildSnapshot)
 	group.GET("/recommendations", h.listRecommendations)
 	group.POST("/recommendations/evaluate", middleware.RequirePermission("mission_control.update"), h.evaluateRecommendations)
+	group.POST("/evaluate-signals", middleware.RequirePermission("mission_control.update"), h.evaluateSignals)
+}
+
+func (h Handler) evaluateSignals(c *gin.Context) {
+	count, err := h.commands.EvaluateSignals(c.Request.Context(), tenantID(c))
+	respond(c, http.StatusOK, gin.H{"evaluated_signals": count}, err)
 }
 
 func (h Handler) summary(c *gin.Context) {

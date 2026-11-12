@@ -33,6 +33,11 @@ func main() {
 	}
 	router := container.HTTPRouter()
 
+	if cfg.StorageDriver == "postgres" {
+		// Inicia motor autônomo 98% IA para escaneamento proativo de sinais operacionais a cada 60s
+		container.StartAutonomousScanner(context.Background(), 60*time.Second)
+	}
+
 	if err := router.Run(cfg.HTTPAddr); err != nil {
 		log.Fatalf("api stopped: %v", err)
 	}

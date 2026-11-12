@@ -17,10 +17,35 @@ type CommandService struct {
 	actions     ports.CommandActionRepository
 	snapshots   ports.OperationalSnapshotRepository
 	idempotency ports.IdempotencyRepository
+	scanner     ports.SignalScanner
 }
 
 func NewCommandService(items ports.CommandItemRepository, events ports.CommandEventRepository, actions ports.CommandActionRepository, snapshots ports.OperationalSnapshotRepository, idempotency ports.IdempotencyRepository) CommandService {
 	return CommandService{items: items, events: events, actions: actions, snapshots: snapshots, idempotency: idempotency}
+}
+
+func (s CommandService) WithSignalScanner(scanner ports.SignalScanner) CommandService {
+	s.scanner = scanner
+	return s
+}
+
+func (s CommandService) EvaluateSignals(ctx context.Context, tenantID string) (int, error) {
+	if s.scanner == nil {
+		return 0, nil
+	}
+	signals, err := s.scanner.ScanOperationalSignals(ctx, tenantID)
+	if err != nil {
+		return 0, err
+	}
+	createdCount := 0
+	for _, sig := range signals {
+		_, err := s.Create(ctx, sig, "system_rules_engine")
+		if err == nil {
+			createdCount++
+		}
+	}
+	_, _ = s.RebuildSnapshot(ctx, tenantID)
+	return createdCount, nil
 }
 
 func (s CommandService) Create(ctx context.Context, item domain.CommandItem, actorID string) (domain.CommandItem, error) {

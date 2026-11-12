@@ -2,15 +2,16 @@ package http
 
 import (
 	"errors"
-	"github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/application"
 	"net/http"
 	"strconv"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/geevheit/intelligence360/backend/api/internal/core/middleware"
+	"github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/application"
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/domain"
 	"github.com/geevheit/intelligence360/backend/api/internal/modules/fleet/ports"
 	"github.com/geevheit/intelligence360/backend/api/internal/shared/contextkeys"
-	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
@@ -20,10 +21,11 @@ type Handler struct {
 	categories ports.VehicleCategoryService
 	types      ports.VehicleTypeService
 	assets     ports.AssetService
+	odometer   ports.OdometerService
 }
 
-func NewHandler(vehicles ports.VehicleService, brands ports.VehicleBrandService, models ports.VehicleModelService, categories ports.VehicleCategoryService, types ports.VehicleTypeService, assets ports.AssetService) Handler {
-	return Handler{vehicles: vehicles, brands: brands, models: models, categories: categories, types: types, assets: assets}
+func NewHandler(vehicles ports.VehicleService, brands ports.VehicleBrandService, models ports.VehicleModelService, categories ports.VehicleCategoryService, types ports.VehicleTypeService, assets ports.AssetService, odometer ports.OdometerService) Handler {
+	return Handler{vehicles: vehicles, brands: brands, models: models, categories: categories, types: types, assets: assets, odometer: odometer}
 }
 
 func (h Handler) RegisterRoutes(router *gin.RouterGroup) {
@@ -35,6 +37,10 @@ func (h Handler) RegisterRoutes(router *gin.RouterGroup) {
 	fleet.GET("/vehicles/:id", h.getVehicle)
 	fleet.PUT("/vehicles/:id", h.updateVehicle)
 	fleet.DELETE("/vehicles/:id", h.deleteVehicle)
+
+	fleet.POST("/vehicles/:id/odometer", h.recordOdometerReading)
+	fleet.GET("/vehicles/:id/odometer", h.getLatestOdometer)
+	fleet.GET("/vehicles/:id/odometer/history", h.listOdometerHistory)
 
 	fleet.POST("/brands", h.createBrand)
 	fleet.GET("/brands", h.searchBrands)
@@ -96,6 +102,32 @@ func (h Handler) deleteVehicle(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+func (h Handler) recordOdometerReading(c *gin.Context) {
+	var item domain.OdometerReading
+	if !bind(c, &item) {
+		return
+	}
+	item.TenantID = tenantID(c)
+	item.VehicleID = c.Param("id")
+	if item.ActorID == "" {
+		if actor, ok := contextkeys.ActorIDFromContext(c.Request.Context()); ok {
+			item.ActorID = actor
+		}
+	}
+	saved, err := h.odometer.RecordReading(c.Request.Context(), item)
+	respond(c, http.StatusCreated, saved, err)
+}
+
+func (h Handler) getLatestOdometer(c *gin.Context) {
+	summary, err := h.odometer.GetSummary(c.Request.Context(), tenantID(c), c.Param("id"))
+	respond(c, http.StatusOK, summary, err)
+}
+
+func (h Handler) listOdometerHistory(c *gin.Context) {
+	page, err := h.odometer.ListHistory(c.Request.Context(), tenantID(c), c.Param("id"), query(c))
+	respond(c, http.StatusOK, page, err)
 }
 
 func (h Handler) createBrand(c *gin.Context) {
@@ -275,7 +307,7 @@ func respond(c *gin.Context, status int, payload any, err error) {
 		case errors.Is(err, application.ErrNotFound):
 			status = http.StatusNotFound
 			message = err.Error()
-		case errors.Is(err, application.ErrValidation):
+		case errors.Is(err, application.ErrValidation), errors.Is(err, application.ErrOdometerRegression), errors.Is(err, application.ErrOdometerCorrectionRequired):
 			status = http.StatusBadRequest
 			message = err.Error()
 		case errors.Is(err, application.ErrConflict), errors.Is(err, application.ErrLicensePlateTaken), errors.Is(err, application.ErrChassisTaken), errors.Is(err, application.ErrRenavamTaken):

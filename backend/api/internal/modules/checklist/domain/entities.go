@@ -188,6 +188,7 @@ type ChecklistExecution struct {
 	ID                string          `json:"id"`
 	TenantID          string          `json:"tenant_id"`
 	TemplateVersionID string          `json:"template_version_id"`
+	VehicleID         string          `json:"vehicle_id,omitempty"`
 	Status            ExecutionStatus `json:"status"`
 	PerformedBy       string          `json:"performed_by,omitempty"`
 	LocationReference string          `json:"location_reference,omitempty"`

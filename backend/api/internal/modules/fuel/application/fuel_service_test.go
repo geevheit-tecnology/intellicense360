@@ -113,6 +113,43 @@ func TestFuelStationCNPJUniquePerTenant(t *testing.T) {
 	}
 }
 
+func TestFuelTransactionThirdPartyRequisitionAndInvoiceReconciliation(t *testing.T) {
+	ctx := context.Background()
+	store := infrastructure.NewMemoryStore()
+	service := application.NewFuelTransactionService(store.Transactions(), store.Adjustments())
+
+	// Requisition provided to third-party aggregate vehicle
+	tx := domain.FuelTransaction{
+		TenantID:             "tenant-a",
+		FuelKind:             domain.FuelKindDieselS10,
+		Quantity:             100,
+		UnitPrice:            5.50,
+		TotalAmount:          550.00,
+		IsThirdParty:         true,
+		ThirdPartyIdentifier: "ABC-9999 / Transportes Silva",
+		RequisitionNumber:    "REQ-2026-0089",
+		InvoiceNumber:        "NFE-445892",
+		InvoiceKey:           "35261100000000000000550010004458921000000001",
+		PaymentStatus:        "pending",
+		PaymentMethod:        "invoice_faturado",
+	}
+
+	created, err := service.Create(ctx, tx)
+	if err != nil {
+		t.Fatalf("expected third party fuel transaction to succeed: %v", err)
+	}
+
+	if !created.IsThirdParty {
+		t.Fatal("expected IsThirdParty to be true")
+	}
+	if created.RequisitionNumber != "REQ-2026-0089" {
+		t.Fatalf("expected requisition REQ-2026-0089, got %s", created.RequisitionNumber)
+	}
+	if created.InvoiceNumber != "NFE-445892" || created.PaymentStatus != "pending" {
+		t.Fatalf("unexpected invoice details: %+v", created)
+	}
+}
+
 func validTransaction(tenantID string) domain.FuelTransaction {
 	return domain.FuelTransaction{
 		TenantID:         tenantID,
