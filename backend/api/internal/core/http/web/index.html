@@ -56,7 +56,10 @@
 
       <div class="sidebar-footer">
         <div>Operação Autônoma Conectada</div>
-        <div style="margin-top: 4px; color: var(--color-success);">● Motor de IA Ativo</div>
+        <div style="margin-top: 4px; color: var(--color-success); margin-bottom: 12px;">● Motor de IA Ativo</div>
+        <button class="btn btn-secondary btn-sm" id="btn-sidebar-logout" style="width: 100%; justify-content: center; border-color: var(--color-danger); color: var(--color-danger);">
+          🚪 Sair / Encerrar Sessão
+        </button>
       </div>
     </aside>
 
@@ -92,7 +95,7 @@
     <div class="card" style="width: 100%; max-width: 420px; padding: 28px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700;">Acesso do Gestor de Frota / ADM</h3>
-        <button id="close-login-modal" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+        <button type="button" id="close-login-modal" class="btn btn-secondary btn-sm">✕ Fechar</button>
       </div>
       <form id="login-form">
         <div style="margin-bottom: 14px;">
@@ -106,8 +109,11 @@
         <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-bottom: 10px;">
           Entrar na Central de Controle
         </button>
-        <button type="button" id="btn-quick-demo" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.8rem;">
+        <button type="button" id="btn-quick-demo" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.8rem; margin-bottom: 10px;">
           ⚡ Conectar Demonstração (admin@geevheit.local)
+        </button>
+        <button type="button" id="btn-cancel-login" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.85rem; color: var(--color-danger); border-color: var(--border-color);">
+          ✕ Fechar / Cancelar
         </button>
       </form>
     </div>

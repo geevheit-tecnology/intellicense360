@@ -41,18 +41,18 @@ class App {
 
     if (api.token) {
       topActions.innerHTML = `
-        <span class="badge badge-success" style="margin-right: 8px;">👤 ADM / Gestor Conectado</span>
-        <button class="btn btn-secondary btn-sm" id="btn-logout">Sair</button>
+        <span class="badge badge-success" style="margin-right: 4px;">👤 ADM Conectado</span>
+        <button class="btn btn-secondary btn-sm" id="btn-logout" style="border-color: var(--color-danger); color: var(--color-danger);">
+          🚪 Sair
+        </button>
       `;
       document.getElementById('btn-logout')?.addEventListener('click', () => {
-        api.clearSession();
-        this.updateTopBar();
-        this.render();
+        this.performLogout();
       });
     } else {
       topActions.innerHTML = `
         <button class="btn btn-primary btn-sm" id="btn-open-login">
-          🔐 Acesso Gestor / ADM
+          🔐 Entrar / Acesso Gestor
         </button>
       `;
       document.getElementById('btn-open-login')?.addEventListener('click', () => {
@@ -62,16 +62,47 @@ class App {
     }
   }
 
+  performLogout() {
+    api.clearSession();
+    this.updateTopBar();
+    this.render();
+    const modal = document.getElementById('login-modal');
+    if (modal) modal.style.display = 'flex';
+  }
+
   bindAuth() {
     this.updateTopBar();
 
     const modal = document.getElementById('login-modal');
     const closeBtn = document.getElementById('close-login-modal');
+    const cancelBtn = document.getElementById('btn-cancel-login');
+    const sidebarLogoutBtn = document.getElementById('btn-sidebar-logout');
     const form = document.getElementById('login-form');
     const quickDemoBtn = document.getElementById('btn-quick-demo');
 
     closeBtn?.addEventListener('click', () => {
       if (modal) modal.style.display = 'none';
+    });
+    cancelBtn?.addEventListener('click', () => {
+      if (modal) modal.style.display = 'none';
+    });
+    sidebarLogoutBtn?.addEventListener('click', () => {
+      this.performLogout();
+    });
+
+    // Global click-outside & ESC key handler to close any open modal
+    document.addEventListener('click', (e) => {
+      if (e.target && (e.target.id === 'login-modal' || e.target.classList?.contains('modal-overlay'))) {
+        e.target.style.display = 'none';
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (modal) modal.style.display = 'none';
+        document.querySelectorAll('.modal-overlay').forEach(el => {
+          el.style.display = 'none';
+        });
+      }
     });
 
     form?.addEventListener('submit', async (e) => {
@@ -477,7 +508,7 @@ class App {
           <div class="modal-content modal-content-wide">
             <div class="modal-header">
               <h3 style="font-weight: 700; font-size: 1.15rem;">Cadastrar Veículo ou Carreta / Semirreboque</h3>
-              <button id="close-modal-vehicle" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+              <button type="button" id="close-modal-vehicle" class="btn btn-secondary btn-sm">✕ Fechar</button>
             </div>
             <form id="form-vehicle-create">
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
@@ -1001,11 +1032,17 @@ class App {
                     <div style="font-size: 0.75rem; color: var(--text-muted);">Validação de Procedimentos e Manutenções</div>
                   </div>
                 </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                  <button type="button" id="close-dossier-modal-bottom" class="btn btn-secondary">✕ Fechar Prontuário</button>
+                </div>
               </div>
             </div>
           `;
 
           dossierModal.querySelector('#close-dossier-modal')?.addEventListener('click', () => {
+            dossierModal.style.display = 'none';
+          });
+          dossierModal.querySelector('#close-dossier-modal-bottom')?.addEventListener('click', () => {
             dossierModal.style.display = 'none';
           });
 
@@ -1504,7 +1541,7 @@ class App {
           <div class="modal-content modal-content-wide">
             <div class="modal-header">
               <h3 style="font-weight: 700; font-size: 1.15rem;">Despachar Nova Viagem / Ordem de Transporte</h3>
-              <button id="close-modal-trip" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+              <button type="button" id="close-modal-trip" class="btn btn-secondary btn-sm">✕ Fechar</button>
             </div>
             <form id="form-trip-create">
               <!-- Conjunto Transportador (Acoplamento Cavalo + Carreta) -->
@@ -1745,7 +1782,7 @@ class App {
               </div>
               <div style="display: flex; gap: 8px;">
                 <button id="btn-print-manifest" class="btn btn-primary btn-sm">🖨️ Imprimir Manifesto</button>
-                <button id="close-manifest" class="btn btn-secondary btn-sm">✕</button>
+                <button type="button" id="close-manifest" class="btn btn-secondary btn-sm">✕ Fechar</button>
               </div>
             </div>
 
@@ -1805,9 +1842,9 @@ class App {
               </div>
             </div>
 
-            <div style="border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+            <div style="border-top: 1px solid var(--border-color); padding-top: 12px; font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
               <div>${trip.validation_notes || 'Inspeção pré-embarque homologada.'}</div>
-              <div>Assinatura Digital do Despacho • Geevheit 360</div>
+              <button type="button" id="close-manifest-bottom" class="btn btn-secondary btn-sm">✕ Fechar Manifesto</button>
             </div>
           </div>
         `;
@@ -1815,6 +1852,9 @@ class App {
         manifestModal.style.display = 'flex';
 
         manifestModal.querySelector('#close-manifest')?.addEventListener('click', () => {
+          manifestModal.style.display = 'none';
+        });
+        manifestModal.querySelector('#close-manifest-bottom')?.addEventListener('click', () => {
           manifestModal.style.display = 'none';
         });
         manifestModal.querySelector('#btn-print-manifest')?.addEventListener('click', () => {
@@ -1970,7 +2010,7 @@ class App {
                     <button id="btn-print-journey" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
                       <span>🖨️</span> Imprimir Espelho de Ponto
                     </button>
-                    <button id="btn-close-journey" class="btn btn-secondary btn-sm">✕</button>
+                    <button type="button" id="btn-close-journey" class="btn btn-secondary btn-sm">✕ Fechar</button>
                   </div>
                 </div>
 
@@ -2129,6 +2169,10 @@ class App {
                       <div style="font-size: 0.75rem; color: var(--text-muted);">Assinatura do Gestor de Frotas / Recursos Humanos</div>
                     </div>
                   </div>
+
+                  <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" id="btn-close-journey-bottom" class="btn btn-secondary">✕ Fechar Diário de Bordo</button>
+                  </div>
                 </div>
               </div>
             `;
@@ -2136,6 +2180,8 @@ class App {
             // Handlers inside modal
             const closeBtn = document.getElementById('btn-close-journey');
             if (closeBtn) closeBtn.onclick = () => { journeyModal.style.display = 'none'; };
+            const closeBottomBtn = document.getElementById('btn-close-journey-bottom');
+            if (closeBottomBtn) closeBottomBtn.onclick = () => { journeyModal.style.display = 'none'; };
 
             const printBtn = document.getElementById('btn-print-journey');
             if (printBtn) printBtn.onclick = () => { window.print(); };
@@ -2949,7 +2995,7 @@ class App {
           <div class="modal-content modal-content-wide">
             <div class="modal-header">
               <h3 style="font-weight: 700; font-size: 1.15rem;">Cadastrar Item no Estoque / Almoxarifado</h3>
-              <button id="close-modal-part" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+              <button type="button" id="close-modal-part" class="btn btn-secondary btn-sm">✕ Fechar</button>
             </div>
             <form id="form-part-create">
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
@@ -3079,7 +3125,7 @@ class App {
           <div class="modal-content">
             <div class="modal-header">
               <h3 style="font-weight: 700; font-size: 1.15rem;">Movimentação de Estoque</h3>
-              <button id="close-modal-movement" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+              <button type="button" id="close-modal-movement" class="btn btn-secondary btn-sm">✕ Fechar</button>
             </div>
             <form id="form-stock-movement">
               <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 14px;">
