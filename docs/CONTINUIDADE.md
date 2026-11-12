@@ -236,6 +236,10 @@ Esse container é exclusivamente descartável e local. Aguarde o banco ficar pro
   - `db-backup`: Serviço cron de backup diário do PostgreSQL às 03:00 com retenção de 30 dias.
 - Scripts de backup e restauração criados em `infra/scripts/backup_postgres.sh` e `infra/scripts/restore_postgres.sh`.
 - Arquivo de exemplo de produção criado em `.env.production.example`.
+- **Suporte Nativo Vercel Serverless (Frontend + Backend Go):**
+  - Configuração unificada via `vercel.json` roteando `/api/*` diretamente para a Serverless Function em Go (`api/index.go`) e todas as outras rotas para o frontend SPA (`apps/mission-control`).
+  - Entrypoint `backend/api/app.go` exporta `InitRouter()` e `ServeHTTP(w, r)` inicializando o monolito modular sob demanda com suporte a fallback em memória ou banco PostgreSQL remoto gerenciado (ex.: Neon / Supabase).
+  - Repositório sincronizado no GitHub remoto oficial (`geevheit-tecnology/intellicense360`).
 
 ## Próximo passo sugerido
 
