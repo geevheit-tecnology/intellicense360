@@ -117,12 +117,25 @@ var runtimeMigrations = map[string]bool{
 
 // CheckMigrations is read-only; startup never performs DDL or seeds users.
 func CheckMigrations(ctx context.Context, db *sql.DB) error {
-	for name := range runtimeMigrations {
-		var exists bool
-		if err := db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE name=$1)`, name).Scan(&exists); err != nil {
-			return fmt.Errorf("schema not ready; run cmd/migrate explicitly")
+	// Single round trip: remote/serverless databases (e.g. Neon) add latency per query.
+	rows, err := db.QueryContext(ctx, `SELECT name FROM schema_migrations`)
+	if err != nil {
+		return fmt.Errorf("schema not ready; run cmd/migrate explicitly: %w", err)
+	}
+	defer rows.Close()
+	applied := make(map[string]bool, len(runtimeMigrations))
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return fmt.Errorf("schema not ready; run cmd/migrate explicitly: %w", err)
 		}
-		if !exists {
+		applied[name] = true
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("schema not ready; run cmd/migrate explicitly: %w", err)
+	}
+	for name := range runtimeMigrations {
+		if !applied[name] {
 			return fmt.Errorf("migration pending: %s; run cmd/migrate explicitly", name)
 		}
 	}

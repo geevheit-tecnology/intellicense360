@@ -18,7 +18,7 @@ func main() {
 	}
 	container := di.NewContainer(cfg)
 	if cfg.StorageDriver == "postgres" {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		db, err := platform.Open(ctx, cfg.DatabaseURL)
 		if err != nil {
 			log.Fatal("database connection failed; check configuration and PostgreSQL availability")

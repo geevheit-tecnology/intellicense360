@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"errors"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -9,48 +11,78 @@ import (
 	"github.com/geevheit/intelligence360/backend/api/internal/core/config"
 	"github.com/geevheit/intelligence360/backend/api/internal/core/di"
 	platform "github.com/geevheit/intelligence360/backend/api/internal/platform/postgres"
-	"github.com/gin-gonic/gin"
+)
+
+// Hosted entrypoint used by platforms that embed the API in another process
+// (e.g. the Vercel Go server at the repository root). Unlike cmd/api, a slow or
+// sleeping database does not kill the process: initialization is retried on the
+// next request and callers receive 503 meanwhile.
+
+const (
+	dbConnectTimeout = 25 * time.Second
+	scannerInterval  = 60 * time.Second
 )
 
 var (
-	router     *gin.Engine
-	routerOnce sync.Once
+	mu      sync.Mutex
+	handler http.Handler
 )
 
-// InitRouter initializes and returns the singleton Gin engine for serverless environments.
-func InitRouter() *gin.Engine {
-	routerOnce.Do(func() {
-		cfg := config.Load()
-		if cfg.AuthSecret == "" {
-			cfg.AuthSecret = "geevheit-serverless-jwt-secret-min-32-chars-long"
-		}
-		if cfg.DatabaseURL == "" {
-			cfg.StorageDriver = "memory"
-		}
+func build() (http.Handler, error) {
+	cfg := config.Load()
+	if cfg.StorageDriver == "postgres" && cfg.DatabaseURL == "" {
+		return nil, errors.New("DATABASE_URL não configurada para STORAGE_DRIVER=postgres")
+	}
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
 
-		container := di.NewContainer(cfg)
-
-		if cfg.StorageDriver == "postgres" && cfg.DatabaseURL != "" {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			db, err := platform.Open(ctx, cfg.DatabaseURL)
-			if err == nil {
-				container.WithDatabase(db)
-			}
+	container := di.NewContainer(cfg)
+	if cfg.StorageDriver == "postgres" {
+		ctx, cancel := context.WithTimeout(context.Background(), dbConnectTimeout)
+		defer cancel()
+		db, err := platform.Open(ctx, cfg.DatabaseURL)
+		if err != nil {
+			return nil, err
 		}
+		if err := platform.CheckMigrations(ctx, db); err != nil {
+			db.Close()
+			return nil, err
+		}
+		container.WithDatabase(db)
+	}
 
-		router = container.HTTPRouter()
-	})
-	return router
+	router := container.HTTPRouter()
+	if cfg.StorageDriver == "postgres" {
+		container.StartAutonomousScanner(context.Background(), scannerInterval)
+	}
+	return router, nil
 }
 
-// ServeHTTP delegates HTTP requests to the initialized Gin engine.
+// Handler returns the API handler, initializing it on first successful use.
+func Handler() (http.Handler, error) {
+	mu.Lock()
+	defer mu.Unlock()
+	if handler != nil {
+		return handler, nil
+	}
+	h, err := build()
+	if err != nil {
+		return nil, err
+	}
+	handler = h
+	return handler, nil
+}
+
+// ServeHTTP serves an API request, answering 503 while the backend is unavailable.
 func ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	rtr := InitRouter()
-	if rtr != nil {
-		rtr.ServeHTTP(w, r)
+	h, err := Handler()
+	if err != nil {
+		log.Printf("api indisponível: %v", err)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = w.Write([]byte(`{"error":"serviço temporariamente indisponível; tente novamente em instantes"}`))
 		return
 	}
-	http.Error(w, "internal server error: router could not be initialized", http.StatusInternalServerError)
+	h.ServeHTTP(w, r)
 }
-
