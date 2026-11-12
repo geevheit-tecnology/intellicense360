@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geevheit Intelligence 360 — Mission Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/styles/theme.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div style="font-size: 20px;">🚛</div>
+        <div>
+          <div class="brand-title">Geevheit 360</div>
+          <span class="brand-badge">Mission Control</span>
+        </div>
+      </div>
+
+      <nav class="nav-links">
+        <a class="nav-item active" data-view="dashboard">
+          <span>📊</span> Painel Executivo
+        </a>
+        <a class="nav-item" data-view="vehicles">
+          <span>🚚</span> Frota & KM
+        </a>
+        <a class="nav-item" data-view="trips">
+          <span>🗺️</span> Viagens & Despacho
+        </a>
+        <a class="nav-item" data-view="drivers">
+          <span>🪪</span> Motoristas & CNH
+        </a>
+        <a class="nav-item" data-view="fuel">
+          <span>⛽</span> Abastecimento & NF
+        </a>
+        <a class="nav-item" data-view="tires">
+          <span>🔘</span> Pneus & Sulco
+        </a>
+        <a class="nav-item" data-view="inventory">
+          <span>📦</span> Estoque & Peças
+        </a>
+        <a class="nav-item" data-view="maintenance">
+          <span>🔧</span> Manutenção & O.S.
+        </a>
+        <a class="nav-item" data-view="checklists">
+          <span>📋</span> Checklists Pátio
+        </a>
+        <a class="nav-item" data-view="financial">
+          <span>💰</span> Financeiro & Caixa
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div>Operação Autônoma Conectada</div>
+        <div style="margin-top: 4px; color: var(--color-success);">● Motor de IA Ativo</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="page-title" style="display: flex; align-items: center;">
+          <span>Geevheit Intelligence 360</span>
+          <span id="backend-status-pill" style="font-size: 0.75rem; margin-left: 12px; padding: 2px 8px; border-radius: 9999px; background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 500;">
+            ● Backend: Verificando...
+          </span>
+        </div>
+        <div class="top-actions" id="top-auth-actions">
+          <button class="btn btn-primary btn-sm" id="btn-open-login">
+            🔐 Acesso Gestor
+          </button>
+        </div>
+      </header>
+
+      <div id="view-content" class="content-body">
+        <!-- Rendered dynamically by App -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 420px; padding: 28px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700;">Acesso do Gestor de Frota / ADM</h3>
+        <button id="close-login-modal" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer;">✕</button>
+      </div>
+      <form id="login-form">
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);">E-mail do Administrador</label>
+          <input type="email" id="login-email" class="input" style="width: 100%; padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px;" placeholder="admin@geevheit.local ou gestor@empresa.com" required value="admin@geevheit.local" />
+        </div>
+        <div style="margin-bottom: 18px;">
+          <label style="display: block; font-size: 0.8rem; margin-bottom: 4px; color: var(--text-muted);">Senha</label>
+          <input type="password" id="login-password" class="input" style="width: 100%; padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px;" placeholder="••••••••" required value="admin1234" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-bottom: 10px;">
+          Entrar na Central de Controle
+        </button>
+        <button type="button" id="btn-quick-demo" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.8rem;">
+          ⚡ Conectar Demonstração (admin@geevheit.local)
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
+

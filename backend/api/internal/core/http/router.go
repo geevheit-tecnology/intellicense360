@@ -2,6 +2,7 @@ package http
 
 import (
 	stdhttp "net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -66,15 +67,41 @@ func NewRouter(deps RouterDependencies) *gin.Engine {
 		middleware.Audit(deps.Logger),
 	)
 
+	indexHTML, staticHandler := loadEmbeddedWeb()
+
 	router.GET("/", func(c *gin.Context) {
+		if len(indexHTML) > 0 && c.Query("format") != "json" {
+			c.Header("Cache-Control", "no-cache")
+			c.Data(stdhttp.StatusOK, "text/html; charset=utf-8", indexHTML)
+			return
+		}
 		c.JSON(stdhttp.StatusOK, gin.H{
 			"status":    "running",
 			"service":   deps.Config.AppName,
 			"message":   "Geevheit Intelligence 360 API está online e pronta para receber requisições!",
-			"dashboard": "http://localhost:3000",
+			"dashboard": "/",
 			"health":    "/health",
 			"timestamp": time.Now().UTC().Format(time.RFC3339),
 		})
+	})
+
+	if staticHandler != nil {
+		router.GET("/src/*filepath", func(c *gin.Context) {
+			staticHandler.ServeHTTP(c.Writer, c.Request)
+		})
+	}
+
+	router.GET("/favicon.ico", func(c *gin.Context) {
+		c.Status(stdhttp.StatusNoContent)
+	})
+
+	router.NoRoute(func(c *gin.Context) {
+		if len(indexHTML) > 0 && c.Request.Method == stdhttp.MethodGet && !strings.HasPrefix(c.Request.URL.Path, "/api/") {
+			c.Header("Cache-Control", "no-cache")
+			c.Data(stdhttp.StatusOK, "text/html; charset=utf-8", indexHTML)
+			return
+		}
+		c.JSON(stdhttp.StatusNotFound, gin.H{"error": "route not found"})
 	})
 
 	router.GET("/health", func(c *gin.Context) {
