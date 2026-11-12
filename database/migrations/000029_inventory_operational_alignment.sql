@@ -16,11 +16,11 @@ insert into permissions(id, key, description) values
     (gen_random_uuid(), 'inventory.inventory.manage', 'Gerenciar cadastro de peças, entradas e saídas de estoque')
 on conflict (key) do nothing;
 
-insert into roles_permissions(tenant_id, role_id, permission_id)
-select r.tenant_id, r.id, p.id
+insert into role_permissions(role_id, permission_id)
+select distinct r.id, p.id
 from roles r
 cross join permissions p
-where r.name = 'admin' and p.key in (
+where r.name = 'admin' and r.deleted_at is null and p.key in (
     'inventory.inventory.read',
     'inventory.inventory.manage'
 )
