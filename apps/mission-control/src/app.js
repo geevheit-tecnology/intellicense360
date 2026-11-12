@@ -7,10 +7,32 @@ class App {
   }
 
   init() {
+    this.initTheme();
     this.bindNavigation();
     this.bindAuth();
     this.checkBackendHealth();
     this.render();
+  }
+
+  initTheme() {
+    const savedTheme = localStorage.getItem('geevheit_theme') || 'light';
+    this.applyTheme(savedTheme);
+
+    const toggleBtn = document.getElementById('btn-theme-toggle');
+    toggleBtn?.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'light' ? 'dark' : 'light';
+      this.applyTheme(next);
+    });
+  }
+
+  applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('geevheit_theme', theme);
+    const toggleBtn = document.getElementById('btn-theme-toggle');
+    if (toggleBtn) {
+      toggleBtn.innerHTML = theme === 'light' ? '🌙 Tema Escuro' : '☀️ Tema Claro (Branco)';
+    }
   }
 
   updateTopBar() {
@@ -68,7 +90,11 @@ class App {
 
     quickDemoBtn?.addEventListener('click', async () => {
       try {
-        await api.login('admin@geevheit.local', 'admin1234');
+        try {
+          await api.login('admin@geevheit.local', 'admin_password_1234!');
+        } catch (_) {
+          await api.login('admin@geevheit.local', 'admin1234');
+        }
         if (modal) modal.style.display = 'none';
         this.updateTopBar();
         this.render();
@@ -348,7 +374,7 @@ class App {
                     return `
                       <tr>
                         <td>
-                          <div style="font-weight: 700; color: #fff; font-size: 15px;">${v.plate || v.license_plate}</div>
+                          <div style="font-weight: 700; color: var(--text-main); font-size: 15px;">${v.plate || v.license_plate}</div>
                           ${v.metadata && v.metadata.coupled_truck_plate ? `
                             <div style="font-size: 0.75rem; color: var(--color-info);">Atrelada a: ${v.metadata.coupled_truck_plate}</div>
                           ` : ''}
@@ -709,7 +735,7 @@ class App {
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
                   <div>
                     <div style="font-size: 0.75rem; color: var(--text-muted);">PLACA DO ATIVO</div>
-                    <div style="font-size: 1.35rem; font-weight: 800; color: #fff;">${plate}</div>
+                    <div style="font-size: 1.35rem; font-weight: 800; color: var(--text-main);">${plate}</div>
                     <div style="font-size: 0.8rem; color: ${isTrailer ? 'var(--color-warning)' : 'var(--color-info)'};">
                       ${isTrailer ? 'Semirreboque / Carreta' : 'Cavalo Mecânico'}
                     </div>
@@ -763,7 +789,7 @@ class App {
                       ${odoHistory.map(r => `
                         <tr>
                           <td>${new Date(r.timestamp || r.created_at).toLocaleString('pt-BR')}</td>
-                          <td style="font-weight: 700; color: #fff;">${Number(r.current_km).toLocaleString('pt-BR')} km</td>
+                          <td style="font-weight: 700; color: var(--text-main);">${Number(r.current_km).toLocaleString('pt-BR')} km</td>
                           <td><span class="badge badge-info">${r.source || 'Manual'}</span></td>
                           <td>${r.is_correction ? '<span class="badge badge-warning">Correção Homologada</span>' : 'Leitura Regular'}</td>
                           <td><span style="color: var(--color-success); font-weight: 600;">✓ Aprovado / Válido</span></td>
@@ -1310,7 +1336,7 @@ class App {
                     return `
                       <tr>
                         <td>
-                          <div style="font-weight: 700; font-family: monospace; color: #fff;">${t.trip_number}</div>
+                          <div style="font-weight: 700; font-family: monospace; color: var(--text-main);">${t.trip_number}</div>
                           <div style="margin-top: 4px;">${statusBadge}</div>
                           ${t.ciot_number ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">CIOT: ${t.ciot_number}</div>` : ''}
                         </td>
@@ -1340,7 +1366,7 @@ class App {
                           ${t.mdfe_key ? `<div style="font-size: 0.7rem; color: var(--color-info); font-family: monospace;">MDF-e OK</div>` : ''}
                         </td>
                         <td>
-                          <div style="font-weight: 700; color: #fff;">R$ ${Number(t.freight_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                          <div style="font-weight: 700; color: var(--text-main);">R$ ${Number(t.freight_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                           <div style="font-size: 0.75rem; color: var(--color-warning);">Adiantamento: R$ ${Number(t.advance_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                           <div style="font-size: 0.75rem; color: var(--color-success); font-weight: 600;">Saldo: R$ ${Number(t.balance_amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                         </td>
@@ -1727,7 +1753,7 @@ class App {
               <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
                 <div>
                   <div style="font-size: 0.75rem; color: var(--text-muted);">STATUS DA VIAGEM</div>
-                  <div style="font-weight: 700; color: #fff;">${trip.status.toUpperCase()}</div>
+                  <div style="font-weight: 700; color: var(--text-main);">${trip.status.toUpperCase()}</div>
                 </div>
                 <div>
                   <div style="font-size: 0.75rem; color: var(--text-muted);">CONJUNTO TRANSPORTADOR</div>
@@ -1937,7 +1963,7 @@ class App {
                       DIÁRIO DE BORDO & CONTROLE DE JORNADA DO MOTORISTA (LEI 13.103/2015)
                     </div>
                     <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
-                      Motorista: <strong style="color: #fff;">${driver.name}</strong> • CPF: <strong>${driver.tax_id || 'Não informado'}</strong> • CNH: <strong>${driver.cnh_number || 'Conferir doc'}</strong>
+                      Motorista: <strong style="color: var(--text-main);">${driver.name}</strong> • CPF: <strong>${driver.tax_id || 'Não informado'}</strong> • CNH: <strong>${driver.cnh_number || 'Conferir doc'}</strong>
                     </div>
                   </div>
                   <div style="display: flex; gap: 8px;">
@@ -1959,7 +1985,7 @@ class App {
 
                   <div class="card" style="padding: 12px 16px;">
                     <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Tempo de Direção</div>
-                    <div style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-top: 4px;">
+                    <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-top: 4px;">
                       ${Math.floor(totalDrivingMin / 60)}h ${totalDrivingMin % 60}m
                     </div>
                   </div>
@@ -1987,7 +2013,7 @@ class App {
                 </div>
 
                 <!-- Registration Form / Dispatch Action Bar -->
-                <div class="card" style="margin-bottom: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color);">
+                <div class="card" style="margin-bottom: 20px; background: var(--bg-surface); border: 1px solid var(--border-color);">
                   <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                     <span>📝</span> Registrar Novo Evento de Ponto / Parada Regulamentar
                   </div>
@@ -1995,7 +2021,7 @@ class App {
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
                       <div>
                         <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Tipo de Apontamento *</label>
-                        <select id="journey-event-type" class="form-control" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--border-color); color: #fff;" required>
+                        <select id="journey-event-type" class="form-control" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);" required>
                           <option value="driving">🚚 Iniciar Direção</option>
                           <option value="break_rest">☕ Parada Descanso Obrigatória (30 min)</option>
                           <option value="meal">🍽️ Almoço / Refeição (Diária R$ 45,00)</option>
@@ -2007,17 +2033,17 @@ class App {
 
                       <div>
                         <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Local / Ponto de Parada *</label>
-                        <input id="journey-location" type="text" class="form-control" placeholder="Ex: Posto Graal KM 120, Garagem, Pátio CD" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--border-color); color: #fff;" required />
+                        <input id="journey-location" type="text" class="form-control" placeholder="Ex: Posto Graal KM 120, Garagem, Pátio CD" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);" required />
                       </div>
 
                       <div>
                         <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Odômetro Atual (KM)</label>
-                        <input id="journey-odometer" type="number" class="form-control" placeholder="Ex: 145200" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--border-color); color: #fff;" />
+                        <input id="journey-odometer" type="number" class="form-control" placeholder="Ex: 145200" style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);" />
                       </div>
 
                       <div>
                         <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Observações</label>
-                        <input id="journey-notes" type="text" class="form-control" placeholder="Opcional: motivo da parada, viagem..." style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--border-color); color: #fff;" />
+                        <input id="journey-notes" type="text" class="form-control" placeholder="Opcional: motivo da parada, viagem..." style="width: 100%; padding: 8px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);" />
                       </div>
                     </div>
 
@@ -2292,7 +2318,7 @@ class App {
                   const isCritical = t.current_tread_mm <= t.minimum_tread_mm;
                   return `
                     <tr>
-                      <td style="font-weight: 700; color: #fff;">${t.fire_number}</td>
+                      <td style="font-weight: 700; color: var(--text-main);">${t.fire_number}</td>
                       <td>${t.brand} ${t.model}</td>
                       <td>${t.size}</td>
                       <td style="font-weight: 700; color: ${isCritical ? 'var(--color-danger)' : 'var(--text-main)'};">
@@ -2839,7 +2865,7 @@ class App {
                     return `
                       <tr>
                         <td>
-                          <div style="font-weight: 700; font-family: monospace; color: #fff;">${p.sku}</div>
+                          <div style="font-weight: 700; font-family: monospace; color: var(--text-main);">${p.sku}</div>
                           ${p.internal_code ? `<div style="font-size: 0.75rem; color: var(--text-muted);">Cód: ${p.internal_code}</div>` : ''}
                         </td>
                         <td>
@@ -2859,7 +2885,7 @@ class App {
                         <td>
                           R$ ${Number(p.unit_cost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>
-                        <td style="font-weight: 700; color: #fff;">
+                        <td style="font-weight: 700; color: var(--text-main);">
                           R$ ${itemTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>
                         <td style="font-size: 0.8rem; color: var(--text-muted);">

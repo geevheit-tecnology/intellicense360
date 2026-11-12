@@ -18,3 +18,4 @@ func loadEmbeddedWeb() (indexHTML []byte, staticHandler stdhttp.Handler) {
 	staticHandler = stdhttp.FileServer(stdhttp.FS(sub))
 	return indexHTML, staticHandler
 }
+

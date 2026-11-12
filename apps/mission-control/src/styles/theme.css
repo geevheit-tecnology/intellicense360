@@ -1,7 +1,41 @@
-/* Geevheit Intelligence 360 - Design System (Soft Dark Theme) */
-:root {
+/* Geevheit Intelligence 360 - Design System (Light Mode Default + Dark Mode Toggle) */
+:root,
+[data-theme="light"] {
+  --bg-main: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --bg-surface: #F1F5F9;
+  --bg-card-hover: #F1F5F9;
+  --border-color: #E2E8F0;
+  --border-focus: #CBD5E1;
+  --text-main: #0F172A;
+  --text-muted: #475569;
+  --text-subtle: #64748B;
+
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-success: #16A34A;
+  --color-success-bg: rgba(22, 163, 74, 0.12);
+  --color-warning: #D97706;
+  --color-warning-bg: rgba(217, 119, 6, 0.12);
+  --color-danger: #DC2626;
+  --color-danger-bg: rgba(220, 38, 38, 0.12);
+  --color-info: #2563EB;
+  --color-info-bg: rgba(37, 99, 235, 0.12);
+
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-size-base: 14px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --transition-fast: 150ms ease-in-out;
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="dark"] {
   --bg-main: #111827;
   --bg-card: #1F2937;
+  --bg-surface: #111827;
   --bg-card-hover: #263445;
   --border-color: #374151;
   --border-focus: #4B5563;
@@ -20,12 +54,6 @@
   --color-info: #3B82F6;
   --color-info-bg: rgba(59, 130, 246, 0.15);
 
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-size-base: 14px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --transition-fast: 150ms ease-in-out;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.35);
 }
@@ -77,6 +105,7 @@ body {
 .brand-badge {
   font-size: 11px;
   background: var(--color-primary);
+  color: #FFFFFF;
   padding: 2px 8px;
   border-radius: 9999px;
   font-weight: 600;
@@ -257,10 +286,11 @@ body {
   font-weight: 600;
 }
 
-.badge-success { background: var(--color-success-bg); color: var(--color-success); border: 1px solid rgba(34,197,94,0.3); }
-.badge-warning { background: var(--color-warning-bg); color: var(--color-warning); border: 1px solid rgba(245,158,11,0.3); }
-.badge-danger  { background: var(--color-danger-bg);  color: var(--color-danger);  border: 1px solid rgba(239,68,68,0.3); }
-.badge-info    { background: var(--color-info-bg);    color: var(--color-info);    border: 1px solid rgba(59,130,246,0.3); }
+.badge-success   { background: var(--color-success-bg); color: var(--color-success); border: 1px solid rgba(34,197,94,0.3); }
+.badge-warning   { background: var(--color-warning-bg); color: var(--color-warning); border: 1px solid rgba(245,158,11,0.3); }
+.badge-danger    { background: var(--color-danger-bg);  color: var(--color-danger);  border: 1px solid rgba(239,68,68,0.3); }
+.badge-info      { background: var(--color-info-bg);    color: var(--color-info);    border: 1px solid rgba(59,130,246,0.3); }
+.badge-secondary { background: var(--bg-surface);       color: var(--text-muted);    border: 1px solid var(--border-color); }
 
 /* Buttons */
 .btn {
